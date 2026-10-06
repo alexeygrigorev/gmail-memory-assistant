@@ -147,10 +147,9 @@ to save stable facts only. A favorite coffee qualifies, and so do the
 names of people close to the user, their work, and their goals. Small
 talk, moods, and off-the-record remarks stay out.
 
-The fact is embedded with a local `all-MiniLM-L6-v2` model and upserted
-into the database.
-We use the hash of the fact as its point id, so writing the same
-sentence twice just overwrites the stored copy.
+The tool embeds the fact with a local `all-MiniLM-L6-v2` model and
+upserts it into the database. The fact's hash is its point id, so
+writing the same sentence twice just overwrites the stored copy.
 
 The agent has a third tool, `get_current_date`, which returns today's
 date. It's deliberately trivial, there to show the model picking the
@@ -167,7 +166,7 @@ as a Server-Sent Events stream:
 - `done` - the turn is complete
 
 Each named session keeps its conversation history in process, so "New
-chat" drops the history while the database keeps the knowledge.
+chat" drops the history while the database keeps the memories.
 
 ## Resetting the memory
 
