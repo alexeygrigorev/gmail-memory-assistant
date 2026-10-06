@@ -15,6 +15,8 @@ from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
     PartDeltaEvent,
+    PartStartEvent,
+    TextPart,
     TextPartDelta,
 )
 from pydantic_ai.models.openai import OpenAIChatModelSettings
@@ -142,6 +144,14 @@ async def text_events(stream):
     """
     async for event in stream:
         if (
+            isinstance(event, PartStartEvent)
+            and isinstance(event.part, TextPart)
+            and event.part.content
+        ):
+            # the first chunk rides in on a PartStartEvent; without this
+            # branch every streamed answer loses its opening word
+            yield {"type": "text", "delta": event.part.content}
+        elif (
             isinstance(event, PartDeltaEvent)
             and isinstance(event.delta, TextPartDelta)
         ):
