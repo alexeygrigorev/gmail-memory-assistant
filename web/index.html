@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memory Chat</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>🧠 Memory Chat</h1>
+      <div class="session">
+        <label for="session">session</label>
+        <input id="session" value="web" spellcheck="false" />
+        <button id="new-chat" title="Drop this conversation's history">New chat</button>
+      </div>
+    </header>
+
+    <main id="chat">
+      <div class="hint">
+        Tell it a fact about yourself — you'll see <code>save_memory</code> fire
+        live. Come back in a new chat and ask for it back.
+      </div>
+    </main>
+
+    <footer>
+      <form id="form">
+        <input
+          id="input"
+          placeholder="Say something…"
+          autocomplete="off"
+          autofocus
+        />
+        <button type="submit" id="send">Send</button>
+      </form>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
