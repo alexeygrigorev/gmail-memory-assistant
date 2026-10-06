@@ -3,41 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Memory Chat</title>
+    <meta name="theme-color" content="#f6f8fc" />
+    <title>Postmark · Email memory demo</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <header>
-      <div class="brand">
-        <span class="brand-mark">🧠</span>
-        <span class="brand-name">Memory Chat</span>
-      </div>
-      <div class="session">
-        <input id="session" value="web" spellcheck="false" aria-label="Session name" />
-        <button id="new-chat" title="Drop this conversation's history">New chat</button>
-      </div>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="Postmark home"><span class="brand-mark">p</span>postmark<span class="demo-badge">DEMO</span></a>
+      <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search mail" aria-label="Search mail" /><span class="search-hint">Sample inbox</span></div>
+      <div class="account"><span class="account-name">Alexey Grigorev</span><span class="avatar account-avatar">AG</span></div>
     </header>
 
-    <main id="chat">
-      <div class="empty">🧠</div>
-    </main>
+    <div class="app-body">
+      <nav class="sidebar" aria-label="Mail folders">
+        <div class="mailbox-label">YOUR MAILBOX</div>
+        <button class="folder active" id="inbox-folder"><span aria-hidden="true">▣</span>Inbox<span class="folder-count">4</span></button>
+        <div class="sidebar-section">LABELS</div>
+        <button class="label-filter" data-category="speaker invitations"><i class="label-dot purple"></i>Speaking</button>
+        <button class="label-filter" data-category="sponsor inquiries"><i class="label-dot amber"></i>Partnerships</button>
+        <button class="label-filter" data-category="student questions"><i class="label-dot teal"></i>Community</button>
+        <div class="sidebar-note"><span class="status-dot"></span>Demo mailbox<p>Sample emails. Draft a reply, teach a preference, then try another email.</p></div>
+        <a class="powered-by" href="https://www.actian.com/databases/vectorai-db/" target="_blank" rel="noreferrer">Memory stored in<br /><strong>Actian VectorAI DB ↗</strong></a>
+      </nav>
 
-    <footer>
-      <form id="form">
-        <input
-          id="input"
-          placeholder="Message…"
-          autocomplete="off"
-          autofocus
-        />
-        <button type="submit" id="send" aria-label="Send">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-            <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z" />
-          </svg>
-        </button>
-      </form>
-    </footer>
+      <section class="inbox" aria-label="Inbox">
+        <div class="inbox-heading"><h1>Inbox</h1><span id="mail-count">4 messages</span></div>
+        <div class="inbox-subhead">All mail <span>Newest first</span></div>
+        <div id="mail-list"></div>
+        <div id="no-results" hidden>No matching emails.</div>
+      </section>
 
+      <main class="workspace">
+        <div class="message-toolbar"><span id="message-position">1 of 4</span><div><button id="previous" aria-label="Previous email">‹</button><button id="next" aria-label="Next email">›</button></div></div>
+        <div class="workspace-scroll">
+          <article class="incoming" aria-label="Selected email">
+            <div class="subject-row"><h2 id="email-subject"></h2><span id="email-label" class="category-chip"></span></div>
+            <div class="sender-row"><span id="sender-avatar" class="avatar"></span><div class="sender-details"><div><strong id="sender-name"></strong> <span id="sender-address"></span></div><span>to me</span></div><time id="email-date"></time></div>
+            <div id="email-body" class="email-body"></div>
+          </article>
+
+          <section id="reply-card" class="reply-card" aria-label="Reply draft">
+            <div class="reply-heading"><div><span class="reply-arrow" aria-hidden="true">↩</span><strong>Reply</strong><span id="reply-recipient"></span></div><label class="memory-switch"><input type="checkbox" id="memory-enabled" checked /><span class="switch-track"></span>Use learned preferences</label></div>
+            <div id="draft-empty" class="draft-empty"><span class="draft-empty-mark" aria-hidden="true">✎</span><h3>A reply that gets better with you</h3><p>Draft a reply, then tell the assistant what to change.<br />It remembers your preferences for the next email.</p><button id="generate" class="primary-button">Draft reply <span aria-hidden="true">↗</span></button></div>
+            <div id="draft-editor" hidden>
+              <div class="draft-subject-row"><label for="draft-subject">Subject</label><input id="draft-subject" aria-label="Reply subject" /></div>
+              <textarea id="draft-body" aria-label="Editable reply draft" placeholder="Writing your reply…" spellcheck="true"></textarea>
+              <div class="draft-actions"><button id="copy" class="primary-button">Copy reply</button><button id="regenerate" class="text-button">Regenerate</button><span id="draft-status" role="status" aria-live="polite">Draft · editable</span></div>
+              <form id="feedback-form" class="feedback-form"><label for="feedback">Tell the assistant what to change</label><div class="feedback-input-row"><textarea id="feedback" rows="2" placeholder="e.g. Ask about the audience before accepting. Keep it under 100 words." aria-describedby="feedback-note"></textarea><button id="revise" type="submit" class="secondary-button">Revise <span aria-hidden="true">↗</span></button></div><div class="feedback-bottom"><button id="suggestion" type="button" class="suggestion-button">Try a correction</button><span id="feedback-note">Reusable corrections carry over to future emails.</span></div></form>
+            </div>
+          </section>
+
+          <details id="memory-details" class="memory-panel"><summary><span class="memory-symbol" aria-hidden="true">◈</span><strong>Drafting memory</strong><span id="memory-summary">Ready to learn</span><span class="details-chevron" aria-hidden="true">⌄</span></summary><div class="memory-panel-body"><p id="memory-explanation">Relevant preferences are retrieved for each email. Corrections are saved as you revise.</p><ul id="memory-list"></ul><div id="memory-activity" aria-live="polite"></div></div></details>
+          <div id="error" class="error" role="alert" hidden></div>
+          <p class="workspace-footnote">You review and edit every draft. Copy it into your email client when ready.</p>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
