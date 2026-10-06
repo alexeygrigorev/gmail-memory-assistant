@@ -12,7 +12,7 @@ terminal.
 ![frontend: Vite](https://img.shields.io/badge/frontend-Vite-646CFF?style=flat-square)
 ![DB: Actian VectorAI](https://img.shields.io/badge/DB-Actian_VectorAI-C81E1E?style=flat-square)
 
-<img src="docs/hero.svg" alt="Terminal demo: one chat saves your coffee and birthday facts as you talk, a fresh chat loads them and answers from memory" width="720">
+<img src="docs/screenshot.png" alt="A chat turn where save_memory fires and the memories-in-context card is visible" width="100%">
 
 </div>
 
