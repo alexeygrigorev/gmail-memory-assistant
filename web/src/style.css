@@ -1,9 +1,9 @@
 :root {
   color-scheme: dark;
-  --bg: #0c0e13;
-  --raised: #131722;
-  --border: #1f2534;
-  --border-soft: #181d29;
+  --bg: #0b0d12;
+  --raised: #141824;
+  --border: #232a3c;
+  --border-soft: #1a202e;
   --text: #e8ebf2;
   --muted: #8b93a7;
   --faint: #5d6577;
@@ -27,10 +27,16 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background:
+    radial-gradient(85rem 28rem at 50% -12rem, rgba(124, 138, 255, 0.07), transparent 60%),
+    var(--bg);
   color: var(--text);
-  font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+  font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
+}
+
+::selection {
+  background: rgba(124, 138, 255, 0.35);
 }
 
 /* --- header ---------------------------------------------------------------- */
@@ -41,7 +47,7 @@ header {
   justify-content: space-between;
   padding: 0.65rem 1.1rem;
   border-bottom: 1px solid var(--border-soft);
-  background: rgba(12, 14, 19, 0.85);
+  background: rgba(11, 13, 18, 0.8);
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
@@ -61,7 +67,7 @@ header {
   place-items: center;
   width: 30px;
   height: 30px;
-  background: var(--raised);
+  background: linear-gradient(180deg, #1c2231, #131722);
   border: 1px solid var(--border);
   border-radius: 9px;
   font-size: 15px;
@@ -74,11 +80,11 @@ header {
 }
 
 .session input {
-  width: 7.5rem;
+  width: 8.5rem;
   padding: 0.32rem 0.6rem;
   background: transparent;
   color: var(--muted);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   font: 0.82rem/1.4 var(--mono);
   transition: border-color 0.15s, color 0.15s;
@@ -86,7 +92,7 @@ header {
 
 .session input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--border);
   color: var(--text);
 }
 
@@ -94,7 +100,7 @@ button {
   padding: 0.34rem 0.75rem;
   background: transparent;
   color: var(--muted);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   font-family: inherit;
   font-size: 0.82rem;
@@ -107,6 +113,7 @@ button {
 button:hover:not(:disabled) {
   color: var(--text);
   border-color: var(--faint);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 button:disabled {
@@ -126,6 +133,8 @@ main {
   max-width: 46rem;
   width: 100%;
   margin: 0 auto;
+  scrollbar-width: thin;
+  scrollbar-color: #232a3c transparent;
 }
 
 main::-webkit-scrollbar {
@@ -133,7 +142,7 @@ main::-webkit-scrollbar {
 }
 
 main::-webkit-scrollbar-thumb {
-  background: #222838;
+  background: #232a3c;
   border-radius: 4px;
 }
 
@@ -143,9 +152,20 @@ main::-webkit-scrollbar-track {
 
 .empty {
   margin: auto;
-  font-size: 42px;
-  opacity: 0.22;
+  font-size: 44px;
+  opacity: 0.25;
   user-select: none;
+  animation: float 5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .msg {
@@ -155,10 +175,10 @@ main::-webkit-scrollbar-track {
 
 .msg.user {
   align-self: flex-end;
-  background: linear-gradient(180deg, #34406b, #2c3860);
-  border: 1px solid #3d4a7a;
+  background: linear-gradient(180deg, #333e66, #2a3557);
   border-radius: 16px 16px 4px 16px;
-  padding: 0.55rem 0.9rem;
+  padding: 0.55rem 0.95rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   white-space: pre-wrap;
 }
 
@@ -213,17 +233,16 @@ main::-webkit-scrollbar-track {
 /* tool cards */
 
 .tool {
-  background: var(--raised);
+  background: rgba(124, 138, 255, 0.06);
   border: 1px solid var(--border-soft);
-  border-left: 2px solid var(--accent);
   border-radius: 10px;
-  padding: 0.45rem 0.7rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.84rem;
   max-width: 30rem;
 }
 
 .tool.save_memory {
-  border-left-color: var(--green);
+  background: rgba(125, 216, 143, 0.06);
 }
 
 .tool-head {
@@ -278,7 +297,7 @@ main::-webkit-scrollbar-track {
 footer {
   padding: 0.9rem 1rem 1.1rem;
   border-top: 1px solid var(--border-soft);
-  background: rgba(12, 14, 19, 0.85);
+  background: rgba(11, 13, 18, 0.8);
   backdrop-filter: blur(10px);
 }
 
@@ -293,11 +312,13 @@ form {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0.35rem 0.35rem 0.35rem 0.9rem;
-  transition: border-color 0.15s;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 form:focus-within {
-  border-color: var(--accent);
+  border-color: #3a4569;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(124, 138, 255, 0.12);
 }
 
 form input {
@@ -323,13 +344,16 @@ form input::placeholder {
   width: 36px;
   height: 36px;
   padding: 0;
-  background: var(--accent);
+  background: linear-gradient(180deg, #8b97ff, #6d7cf2);
   border: none;
   border-radius: 10px;
   color: #0d1020;
+  box-shadow: 0 1px 6px rgba(124, 138, 255, 0.35);
+  transition: filter 0.15s, box-shadow 0.15s;
 }
 
 #send:hover:not(:disabled) {
-  background: var(--accent-strong);
-  color: #0d1020;
+  background: linear-gradient(180deg, #8b97ff, #6d7cf2);
+  filter: brightness(1.1);
+  box-shadow: 0 2px 10px rgba(124, 138, 255, 0.45);
 }

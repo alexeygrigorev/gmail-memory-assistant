@@ -81,7 +81,7 @@ function toolCard(block, name, args) {
 
   const resultEl = document.createElement('div')
   resultEl.className = 'tool-result'
-  resultEl.textContent = '…'
+  resultEl.textContent = '...'
 
   card.append(head, argsEl, resultEl)
   block.root.appendChild(card)
