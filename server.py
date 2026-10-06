@@ -28,6 +28,7 @@ from pydantic_ai.messages import (
     PartDeltaEvent,
     TextPartDelta,
 )
+from pydantic_ai.models.openai import OpenAIChatModelSettings
 
 import memory
 
@@ -84,6 +85,8 @@ def build_agent(memories: list[str]) -> Agent:
             f"Things you already remember about the user:\n{known_facts}",
         ],
         tools=[save_memory, search_memory, get_current_date],
+        # keep the model from mulling things over before answering
+        model_settings=OpenAIChatModelSettings(openai_reasoning_effort="minimal"),
     )
 
 
