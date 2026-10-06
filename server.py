@@ -7,7 +7,7 @@ every tool call shows up the moment it happens.
 
 Run it:
 
-    .venv/bin/uvicorn server:app --port 8000
+    uv run uvicorn server:app --port 8000
 
 Then open the Vite dev server (web/, port 5173) or, after
 `cd web && npm run build`, the same page directly at http://localhost:8000.

@@ -7,8 +7,8 @@ across chats and restarts.
 
 For the demo, run it in two terminals:
 
-    .venv/bin/python chat.py Chat-A
-    .venv/bin/python chat.py Chat-B
+    uv run python chat.py Chat-A
+    uv run python chat.py Chat-B
 """
 
 import sys
