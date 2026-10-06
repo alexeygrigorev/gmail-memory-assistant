@@ -22,7 +22,7 @@ from actian_vectorai import (
 from sentence_transformers import SentenceTransformer
 
 DB_ADDRESS = "localhost:6574"
-COLLECTION = "user_memories"
+COLLECTION = "email_drafting_memories"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 EMBEDDING_SIZE = 384
 USER_ID = "alexey"
@@ -51,12 +51,12 @@ def point_id(content: str) -> int:
     return int(digest[:15], 16)
 
 
-def remember(content: str) -> None:
-    """Save one memory (a short sentence about the user)."""
+def remember(content: str, category: str = "general", rule: str = "") -> None:
+    """Save a scoped drafting rule; the same rule key replaces an older version."""
     point = PointStruct(
-        id=point_id(content),
-        vector=embed(content),
-        payload={"user_id": USER_ID, "content": content},
+        id=point_id(f"{USER_ID}:{category}:{rule or content}"),
+        vector=embed(f"{category}: {content}"),
+        payload={"user_id": USER_ID, "category": category, "content": content},
     )
     with VectorAIClient(DB_ADDRESS) as client:
         ensure_collection(client)
@@ -76,5 +76,5 @@ def recall(query: str, limit: int = 5) -> list[str]:
         )
     memories = []
     for point in points:
-        memories.append(point.payload["content"])
+        memories.append(f"[{point.payload.get('category', 'general')}] {point.payload['content']}")
     return memories

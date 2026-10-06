@@ -13,6 +13,7 @@ Then open the Vite dev server (web/, port 5173) or, after
 `cd web && npm run build`, the same page directly at http://localhost:8000.
 """
 
+import asyncio
 import json
 
 from fastapi import FastAPI
@@ -26,19 +27,22 @@ from agent import Session
 # One chat session per name: the message history that keeps working
 # memory alive while the tab stays open. Long-term memory is the
 # database; this is deliberately not it.
-sessions: dict[str, Session] = {}
+sessions: dict[tuple[str, bool], Session] = {}
+locks: dict[tuple[str, bool], asyncio.Lock] = {}
 
 
 class ChatRequest(BaseModel):
     session: str = "web"
     message: str
+    memory_enabled: bool = True
 
 
-def get_session(name: str) -> Session:
+def get_session(name: str, memory_enabled: bool = True) -> Session:
     """Return the named session, loading its memories once."""
-    if name not in sessions:
-        sessions[name] = Session()
-    return sessions[name]
+    key = (name, memory_enabled)
+    if key not in sessions:
+        sessions[key] = Session(memory_enabled)
+    return sessions[key]
 
 
 def sse(event: dict) -> str:
@@ -46,15 +50,17 @@ def sse(event: dict) -> str:
     return f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
 
 
-async def event_stream(name: str, question: str):
+async def event_stream(name: str, question: str, memory_enabled: bool = True):
     """Run the agent and yield SSE events as they happen."""
-    session = get_session(name)
-    session.refresh()  # the card and the agent must see the current database
     yield sse({"type": "start"})
-    yield sse({"type": "memories", "items": session.memories})
     try:
-        async for event in session.events(question):
-            yield sse(event)
+        async with locks.setdefault((name, memory_enabled), asyncio.Lock()):
+            session = get_session(name, memory_enabled)
+            await asyncio.to_thread(session.refresh, question)
+            yield sse({"type": "memories", "items": session.memories,
+                       "enabled": memory_enabled})
+            async for event in session.events(question):
+                yield sse(event)
         yield sse({"type": "done"})
     except Exception as error:  # surface it in the chat, not only the server log
         yield sse({"type": "error", "message": str(error)})
@@ -76,7 +82,7 @@ def chat(request: ChatRequest) -> StreamingResponse:
     if not question:
         return StreamingResponse(iter([sse({"type": "error", "message": "empty"})]))
     return StreamingResponse(
-        event_stream(request.session, question),
+        event_stream(request.session, question, request.memory_enabled),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -85,7 +91,8 @@ def chat(request: ChatRequest) -> StreamingResponse:
 @app.delete("/api/session/{name}")
 def reset_session(name: str) -> dict:
     """Forget the conversation history; the database memories stay."""
-    sessions.pop(name, None)
+    sessions.pop((name, True), None)
+    sessions.pop((name, False), None)
     return {"ok": True}
 
 
