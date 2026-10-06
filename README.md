@@ -85,8 +85,7 @@ port 5173 and proxies `/api` requests to the backend on port 8000.
 
 ## The demo
 
-Two chats are enough to watch a fact cross from one conversation into
-the next.
+Run two chats and watch a fact cross from one conversation into the next.
 
 First, ask chat A something the agent doesn't know yet:
 
@@ -120,7 +119,7 @@ uv run python chat.py Chat-A
 # Agent: Your favorite coffee is a flat white with oat milk.
 ```
 
-The web UI shows the same story on screen. Every `save_memory` call
+The web UI shows the same thing on screen. Every `save_memory` call
 appears as a tool-call card while the answer streams. A fresh session
 lists the loaded facts in a memories-in-context card.
 
@@ -148,8 +147,8 @@ to save stable facts only. A favorite coffee qualifies, and so do the
 names of people close to the user, their work, and their goals. Small
 talk, moods, and off-the-record remarks stay out.
 
-The fact is embedded
-with a local `all-MiniLM-L6-v2` model and upserted into the database.
+The fact is embedded with a local `all-MiniLM-L6-v2` model and upserted
+into the database.
 We use the hash of the fact as its point id, so writing the same
 sentence twice just overwrites the stored copy.
 
@@ -185,7 +184,7 @@ points can reappear from the write-ahead log after a delete.
 
 ## Possible improvements
 
-A few extensions would make the memory more useful:
+You can extend the agent's memory in a few ways:
 
 - Search memories with the user's actual first question at session
   start, instead of one fixed query. That matters once there are
