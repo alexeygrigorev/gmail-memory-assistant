@@ -201,6 +201,17 @@ class Session:
         self.agent = build_agent(self.memories)
         self.history = []
 
+    def refresh(self) -> None:
+        """
+        Reload memories from the database and rebuild the agent.
+
+        A long-lived session (the web server keeps one per tab) would
+        otherwise keep the snapshot from its start: facts saved since
+        then, or by another chat, would be missing from its instructions.
+        """
+        self.memories = load_memories()
+        self.agent = build_agent(self.memories)
+
     def run(self, question: str) -> str:
         """
         One synchronous turn; used by the terminal chat.
