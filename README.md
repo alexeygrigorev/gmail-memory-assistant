@@ -77,7 +77,7 @@ Or run the same agent in the terminal:
 uv run python chat.py Chat-A
 ```
 
-The first start downloads the `all-MiniLM-L6-v2` embedding model, about
+The first run downloads the `all-MiniLM-L6-v2` embedding model, about
 90 MB, and caches it for later runs.
 
 For frontend work, run `npm run dev` in `web/`: Vite serves the UI on
@@ -178,9 +178,9 @@ uv run python reset.py
 ```
 
 The script stops the `vectorai` container, empties `local_data/`, and
-starts the container again. It takes that route instead of deleting
-points. This VectorAI DB version (1.0.3) has unreliable deletes, and
-points can reappear from the write-ahead log after a delete.
+starts the container again. It wipes the whole volume instead of
+deleting points, because this VectorAI DB version (1.0.3) has
+unreliable deletes: points can reappear from the write-ahead log.
 
 ## Possible improvements
 
