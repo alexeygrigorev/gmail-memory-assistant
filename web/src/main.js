@@ -95,6 +95,37 @@ function toolCard(block, name, args) {
   }
 }
 
+function memoryCard(block, items) {
+  const el = document.createElement('details')
+  el.className = 'memory'
+
+  const summary = document.createElement('summary')
+  const icon = document.createElement('span')
+  icon.className = 'tool-icon'
+  icon.textContent = '🧠'
+  const label = document.createElement('span')
+  label.textContent = items.length
+    ? `${items.length} ${items.length === 1 ? 'memory' : 'memories'} in context`
+    : 'long-term memory is empty'
+  summary.append(icon, label)
+  el.appendChild(summary)
+
+  if (items.length) {
+    const list = document.createElement('ul')
+    for (const item of items) {
+      const li = document.createElement('li')
+      li.textContent = item
+      list.appendChild(li)
+    }
+    el.appendChild(list)
+  }
+
+  // ahead of the thinking dots, so they keep pulsing below the card
+  if (block.status.isConnected) block.status.before(el)
+  else block.root.appendChild(el)
+  scrollIfNearBottom()
+}
+
 function errorNote(block, message) {
   block.status.remove()
   const el = document.createElement('div')
@@ -159,6 +190,9 @@ function handleEvent(block, event) {
       break
     case 'tool_result':
       block.activeCard?.done(event.result)
+      break
+    case 'memories':
+      memoryCard(block, event.items ?? [])
       break
     case 'error':
       errorNote(block, event.message)
