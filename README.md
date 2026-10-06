@@ -1,26 +1,26 @@
 # Agent with Memory — demo
 
-A tiny demo of an AI agent that **remembers things about you across chats**.
+A tiny demo of an AI agent that remembers things about you across chats.
 
 The agent has two kinds of memory:
 
-- **Working memory** — the conversation itself. Lives in the context window.
+- Working memory — the conversation itself. Lives in the context window.
   Gone when the chat ends.
-- **Long-term memory** — short facts about the user, stored as embeddings in a
+- Long-term memory — short facts about the user, stored as embeddings in a
   local [VectorAI DB](https://www.actian.com/databases/vectorai-db/) vector
   database. Survives chats and restarts.
 
 The pattern follows the
 [Agent Memory Hub](https://github.com/actian-devs/agent-memory-hub) tutorial
 ["How to Build Persistent Agent Memory Across Sessions"](https://actiandev.hashnode.dev/how-to-build-persistent-agent-memory-across-sessions):
-**read memories at session start** — and, unlike a fixed pipeline, the agent
-**writes memories itself, with a tool, the moment it notices a fact**.
+read memories at session start — and, unlike a fixed pipeline, the agent
+writes memories itself, with a tool, the moment it notices a fact.
 
 ## The demo
 
 Use two terminals.
 
-**Step 1 — Chat A, ask something.** The agent doesn't know it yet:
+Step 1 — Chat A, ask something. The agent doesn't know it yet:
 
 ```bash
 .venv/bin/python chat.py Chat-A
@@ -29,7 +29,7 @@ Use two terminals.
 # exit
 ```
 
-**Step 2 — Chat B, share the fact.** The agent decides on its own to call
+Step 2 — Chat B, share the fact. The agent decides on its own to call
 `save_memory`, and you see it happen live:
 
 ```bash
@@ -40,7 +40,7 @@ Use two terminals.
 # [memory] SAVED: The user's daughter Mia is 5 years old.
 ```
 
-**Step 3 — Chat A again (restart!).** The working memory is empty, but the
+Step 3 — Chat A again (restart!). The working memory is empty, but the
 agent loads its long-term memories at startup and now knows:
 
 ```bash
@@ -65,7 +65,7 @@ Open http://localhost:5173. After `cd web && npm run build`, the built
 site is served by the backend itself, so http://localhost:8000 alone is
 enough — one process, no Node.
 
-`server.py` is `chat.py` over HTTP: `POST /api/chat` answers with
+`server.py` serves the same agent over HTTP: `POST /api/chat` answers with
 Server-Sent Events (`start`, `text` deltas, `tool_call`, `tool_result`,
 `done`), and each session name (top right) keeps its own conversation
 history in memory — "New chat" drops it, the database memories stay.
@@ -76,19 +76,20 @@ Three small files plus a frontend:
 
 ```
 memory.py   the long-term memory: write and search facts in VectorAI DB
-chat.py     the terminal agent: the chat loop, the memory tools, the startup load
+agent.py    the agent: the memory tools, the instructions, the startup load
+chat.py     the terminal chat loop that runs the agent
 server.py   the same agent as an HTTP server that streams events
 web/        the Vite chat interface for server.py
 ```
 
-**Reading** (`load_memories` and `search_memory` in `chat.py`, `recall` in
+Reading (`load_memories` and `search_memory` in `agent.py`, `recall` in
 `memory.py`): every new session starts by embedding the query
 *"personal facts and preferences of the user"*, searching the vector database
 for the most similar stored facts, and putting them into the agent's
 instructions. The agent also has a `search_memory` tool, so it can dig
 through memories mid-conversation.
 
-**Writing** (`save_memory` in `chat.py`, `remember` in `memory.py`): saving is
+Writing (`save_memory` in `agent.py`, `remember` in `memory.py`): saving is
 a tool, not a pipeline step. The model decides when to call it, guided by the
 conditions in the tool description: save stable facts (preferences, people,
 work, goals); skip small talk, moods, temporary plans, and off-the-record
@@ -97,7 +98,7 @@ fact is embedded with a local sentence-transformers model
 (`all-MiniLM-L6-v2`) and upserted into VectorAI DB. The fact itself is the
 point id, so saving the same thing twice just overwrites it.
 
-**Other tools**: the agent also has `get_current_date` — deliberately trivial,
+Other tools: the agent also has `get_current_date` — deliberately trivial,
 to show that the model picks the right tool on its own.
 
 Both memory operations are user-scoped: they filter by `user_id`, so the same
@@ -137,8 +138,8 @@ back from the write-ahead log after a delete.
 
 ## Possible improvements
 
-- **Recall per question**: at startup, search memories with the user's actual
+- Recall per question: at startup, search memories with the user's actual
   first question instead of one fixed query — matters with hundreds of facts.
-- **Update and forget**: detect changed facts ("no, I drink tea now") and
+- Update and forget: detect changed facts ("no, I drink tea now") and
   deduplicate near-identical memories by similarity score.
-- **Forgetting on request**: a `forget` tool that deletes a memory by query.
+- Forgetting on request: a `forget` tool that deletes a memory by query.
