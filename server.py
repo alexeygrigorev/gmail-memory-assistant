@@ -49,6 +49,7 @@ def sse(event: dict) -> str:
 async def event_stream(name: str, question: str):
     """Run the agent and yield SSE events as they happen."""
     session = get_session(name)
+    session.refresh()  # the card and the agent must see the current database
     yield sse({"type": "start"})
     yield sse({"type": "memories", "items": session.memories})
     try:
