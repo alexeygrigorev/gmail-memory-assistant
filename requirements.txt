@@ -2,3 +2,5 @@ pydantic-ai-slim[openai]
 actian-vectorai-client
 sentence-transformers
 python-dotenv
+fastapi
+uvicorn
