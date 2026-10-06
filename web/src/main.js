@@ -11,6 +11,13 @@ const newChatEl = document.getElementById('new-chat')
 
 const session = () => sessionEl.value.trim() || 'web'
 
+function showEmpty() {
+  const el = document.createElement('div')
+  el.className = 'empty'
+  el.textContent = '🧠'
+  chatEl.appendChild(el)
+}
+
 function scrollIfNearBottom(force = false) {
   const nearBottom =
     chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 120
@@ -32,7 +39,7 @@ function agentBlock() {
   root.className = 'msg agent'
   const status = document.createElement('div')
   status.className = 'thinking'
-  status.append('thinking')
+  for (let i = 0; i < 3; i++) status.appendChild(document.createElement('i'))
   root.appendChild(status)
   chatEl.appendChild(root)
   scrollIfNearBottom(true)
@@ -70,7 +77,7 @@ function toolCard(block, name, args) {
 
   const argsEl = document.createElement('pre')
   argsEl.className = 'tool-args'
-  argsEl.textContent = JSON.stringify(args, null, 2)
+  argsEl.textContent = JSON.stringify(args)
 
   const resultEl = document.createElement('div')
   resultEl.className = 'tool-result'
@@ -99,6 +106,7 @@ function errorNote(block, message) {
 // --- streaming --------------------------------------------------------------
 
 async function send(text) {
+  chatEl.querySelector('.empty')?.remove()
   userMessage(text)
   inputEl.disabled = true
   sendEl.disabled = true
@@ -177,5 +185,5 @@ formEl.addEventListener('submit', (e) => {
 newChatEl.addEventListener('click', async () => {
   await fetch(`/api/session/${encodeURIComponent(session())}`, { method: 'DELETE' })
   chatEl.replaceChildren()
-  chatEl.appendChild(Object.assign(document.createElement('div'), { className: 'hint', textContent: 'New chat. The database memories are still there.' }))
+  showEmpty()
 })

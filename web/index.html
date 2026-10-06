@@ -8,30 +8,33 @@
   </head>
   <body>
     <header>
-      <h1>🧠 Memory Chat</h1>
+      <div class="brand">
+        <span class="brand-mark">🧠</span>
+        <span class="brand-name">Memory Chat</span>
+      </div>
       <div class="session">
-        <label for="session">session</label>
-        <input id="session" value="web" spellcheck="false" />
+        <input id="session" value="web" spellcheck="false" aria-label="Session name" />
         <button id="new-chat" title="Drop this conversation's history">New chat</button>
       </div>
     </header>
 
     <main id="chat">
-      <div class="hint">
-        Tell it a fact about yourself — you'll see <code>save_memory</code> fire
-        live. Come back in a new chat and ask for it back.
-      </div>
+      <div class="empty">🧠</div>
     </main>
 
     <footer>
       <form id="form">
         <input
           id="input"
-          placeholder="Say something…"
+          placeholder="Message…"
           autocomplete="off"
           autofocus
         />
-        <button type="submit" id="send">Send</button>
+        <button type="submit" id="send" aria-label="Send">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z" />
+          </svg>
+        </button>
       </form>
     </footer>
 
