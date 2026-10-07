@@ -3,21 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f2ecdf" />
+    <meta name="theme-color" content="#f6f8fc" />
     <title>Postmark</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <header class="app-header">
-      <a class="brand" href="/" aria-label="Postmark home"><span class="brand-mark">p</span>postmark<span class="demo-badge">SPECIMEN</span></a>
-      <div class="search-wrap"><input id="search" type="search" placeholder="search mail" aria-label="Search mail" /></div>
+      <a class="brand" href="/" aria-label="Postmark home"><span class="brand-mark">p</span>postmark</a>
+      <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search mail" aria-label="Search mail" /></div>
       <div class="account"><span class="account-name">Alexey Grigorev</span><span class="avatar account-avatar">AG</span></div>
     </header>
 
     <div class="app-body">
       <nav class="sidebar" aria-label="Mail folders">
-        <button class="folder active" id="inbox-folder">Inbox<span class="folder-count">4</span></button>
-        <div class="sidebar-section">File under</div>
+        <div class="mailbox-label">YOUR MAILBOX</div>
+        <button class="folder active" id="inbox-folder"><span aria-hidden="true">▣</span>Inbox<span class="folder-count">4</span></button>
+        <div class="sidebar-section">LABELS</div>
         <button class="label-filter" data-category="speaker invitations"><i class="label-dot purple"></i>Speaking</button>
         <button class="label-filter" data-category="sponsor inquiries"><i class="label-dot amber"></i>Partnerships</button>
         <button class="label-filter" data-category="student questions"><i class="label-dot teal"></i>Community</button>
@@ -26,6 +27,7 @@
 
       <section class="inbox" aria-label="Inbox">
         <div class="inbox-heading"><h1>Inbox</h1><span id="mail-count">4 messages</span></div>
+        <div class="inbox-subhead">All mail <span>Newest first</span></div>
         <div id="mail-list"></div>
         <div id="no-results" hidden>No matching emails.</div>
       </section>
@@ -40,19 +42,20 @@
           </article>
 
           <section id="reply-card" class="reply-card" aria-label="Reply draft">
-            <div class="reply-heading"><div><strong>Reply</strong><span id="reply-recipient"></span></div><label class="memory-switch"><input type="checkbox" id="memory-enabled" checked /><span class="switch-track"></span>Use learned preferences</label></div>
-            <div id="draft-empty" class="draft-empty"><h3>A reply that gets better with you</h3><button id="generate" class="primary-button">Draft reply</button></div>
+            <div class="reply-heading"><div><span class="reply-arrow" aria-hidden="true">↩</span><strong>Reply</strong><span id="reply-recipient"></span></div><label class="memory-switch"><input type="checkbox" id="memory-enabled" checked /><span class="switch-track"></span>Use learned preferences</label></div>
+            <div id="draft-empty" class="draft-empty"><span class="draft-empty-mark" aria-hidden="true">✎</span><h3>A reply that gets better with you</h3><p>Draft a reply, then tell the assistant what to change.<br />It remembers your preferences for the next email.</p><button id="generate" class="primary-button">Draft reply <span aria-hidden="true">↗</span></button></div>
             <div id="draft-editor" hidden>
-              <details id="used-memory-details" class="used-memory" hidden><summary><strong>Memories used for this draft</strong><span id="used-memory-count"></span><span class="details-chevron" aria-hidden="true">+</span></summary><div class="used-memory-body"><p id="used-memory-note">Preferences the assistant reports applying to this reply.</p><ul id="used-memory-list"></ul></div></details>
+              <details id="used-memory-details" class="used-memory" hidden><summary><span class="memory-symbol" aria-hidden="true">◈</span><strong>Memories used for this draft</strong><span id="used-memory-count"></span><span class="details-chevron" aria-hidden="true">⌄</span></summary><div class="used-memory-body"><p id="used-memory-note">Preferences the assistant reports applying to this reply.</p><ul id="used-memory-list"></ul></div></details>
               <div class="draft-subject-row"><label for="draft-subject">Subject</label><input id="draft-subject" aria-label="Reply subject" /></div>
               <textarea id="draft-body" aria-label="Editable reply draft" placeholder="Writing your reply…" spellcheck="true"></textarea>
               <div class="draft-actions"><button id="copy" class="primary-button">Copy reply</button><button id="regenerate" class="text-button">Regenerate</button><span id="draft-status" role="status" aria-live="polite">Draft · editable</span></div>
-              <form id="feedback-form" class="feedback-form"><label for="feedback">Tell the assistant what to change</label><div class="feedback-input-row"><textarea id="feedback" rows="2" placeholder="e.g. Ask about the audience before accepting. Keep it under 100 words." aria-describedby="feedback-note"></textarea><button id="revise" type="submit" class="secondary-button">Revise</button></div><div class="feedback-bottom"><button id="suggestion" type="button" class="suggestion-button">Try a correction</button><span id="feedback-note">Reusable corrections carry over to future emails.</span></div></form>
+              <form id="feedback-form" class="feedback-form"><label for="feedback">Tell the assistant what to change</label><div class="feedback-input-row"><textarea id="feedback" rows="2" placeholder="e.g. Ask about the audience before accepting. Keep it under 100 words." aria-describedby="feedback-note"></textarea><button id="revise" type="submit" class="secondary-button">Revise <span aria-hidden="true">↗</span></button></div><div class="feedback-bottom"><button id="suggestion" type="button" class="suggestion-button">Try a correction</button><span id="feedback-note">Reusable corrections carry over to future emails.</span></div></form>
             </div>
           </section>
 
-          <details id="memory-details" class="memory-panel"><summary><strong>Drafting memory</strong><span id="memory-summary">Ready to learn</span><span class="details-chevron" aria-hidden="true">+</span></summary><div class="memory-panel-body"><p id="memory-explanation">Relevant preferences are retrieved for each email. Corrections are saved as you revise.</p><ul id="memory-list"></ul><div id="memory-activity" aria-live="polite"></div></div></details>
+          <details id="memory-details" class="memory-panel"><summary><span class="memory-symbol" aria-hidden="true">◈</span><strong>Drafting memory</strong><span id="memory-summary">Ready to learn</span><span class="details-chevron" aria-hidden="true">⌄</span></summary><div class="memory-panel-body"><p id="memory-explanation">Relevant preferences are retrieved for each email. Corrections are saved as you revise.</p><ul id="memory-list"></ul><div id="memory-activity" aria-live="polite"></div></div></details>
           <div id="error" class="error" role="alert" hidden></div>
+          <p class="workspace-footnote">You review and edit every draft. Copy it into your email client when ready.</p>
         </div>
       </main>
     </div>
