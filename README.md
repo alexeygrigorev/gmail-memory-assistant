@@ -54,6 +54,8 @@ For frontend development, `npm run dev --prefix web` starts Vite on port
 
 ## A three minute demo
 
+See [demo.md](demo.md) for the full presentation scenario and narration.
+
 1. Open Maya's **Speaking at the Berlin Data Forum** message and click
    **Draft reply**. With a new email-memory collection, the assistant has
    no saved preferences.
