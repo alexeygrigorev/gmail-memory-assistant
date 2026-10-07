@@ -79,9 +79,13 @@ You can edit the subject and reply directly. Corrections use your current
 edited draft. **Regenerate** starts a fresh conversation for the selected
 email while retaining saved preferences.
 
-The drafting memory panel shows retrieval candidates, not a claim that every
-returned rule affected the reply. The agent is instructed to apply only
-rules relevant to the current email category.
+Each draft lists the memories the assistant reports applying. The separate
+drafting memory panel shows retrieval candidates and saved corrections;
+retrieval alone does not mean a rule was used. The agent can report only
+memories actually retrieved or saved during that request.
+
+Draft validation asks the agent to rewrite dash punctuation and dash-led
+lists before accepting its final reply.
 
 ## What memory contributes
 

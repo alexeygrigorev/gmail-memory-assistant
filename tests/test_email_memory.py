@@ -8,11 +8,15 @@ from unittest.mock import MagicMock, patch
 import agent
 import memory
 import server
+from pydantic_ai import ModelRetry
+from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
     ToolCallPart,
     ToolReturnPart,
+    ModelResponse,
+    TextPart,
 )
 
 
@@ -54,6 +58,52 @@ class MemoryTests(unittest.TestCase):
         self.assertIsNot(enabled, disabled)
         server.reset_session('comparison')
         self.assertFalse(server.sessions)
+
+    def test_usage_report_rejects_memories_not_available_to_the_agent(self):
+        stored = '[speaker invitations] Ask about the audience.'
+        tools = agent.build_agent([stored])._function_toolset.tools
+        report = tools['report_memory_usage'].function
+        self.assertEqual(report([stored, stored]), {'used': [stored]})
+        with self.assertRaises(ModelRetry):
+            report(['[general] An invented preference'])
+
+    def test_usage_report_can_include_additional_search_results(self):
+        found = '[general] Keep replies concise.'
+        tools = agent.build_agent([])._function_toolset.tools
+        with patch.object(memory, 'recall', return_value=[found]):
+            tools['search_memory'].function('reply length')
+        self.assertEqual(tools['report_memory_usage'].function([found]), {'used': [found]})
+
+    def test_dash_punctuation_triggers_a_rewrite(self):
+        calls = 0
+
+        def respond(messages, info):
+            nonlocal calls
+            calls += 1
+            text = 'Hi Maya — thank you.\n- What is the date?' if calls == 1 else 'Hi Maya, thank you. What is the date?'
+            return ModelResponse(parts=[TextPart(text)])
+
+        drafting_agent = agent.build_agent([], memory_enabled=False)
+        with drafting_agent.override(model=FunctionModel(respond)):
+            result = drafting_agent.run_sync('Draft a reply')
+        self.assertEqual(calls, 2)
+        self.assertEqual(result.output, 'Hi Maya, thank you. What is the date?')
+
+    def test_draft_requires_an_explicit_memory_usage_report(self):
+        calls = 0
+
+        def respond(messages, info):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                return ModelResponse(parts=[ToolCallPart('report_memory_usage', {'items': []}, 'usage')])
+            return ModelResponse(parts=[TextPart('Hi Maya, thank you.')])
+
+        drafting_agent = agent.build_agent([])
+        with drafting_agent.override(model=FunctionModel(respond)):
+            result = drafting_agent.run_sync('Draft a reply')
+        self.assertEqual(calls, 3)
+        self.assertEqual(result.output, 'Hi Maya, thank you.')
 
 
 class StreamingTests(unittest.IsolatedAsyncioTestCase):

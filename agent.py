@@ -7,11 +7,12 @@ visible during the demo.
 """
 
 import json
+import re
 from datetime import datetime
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic_ai import Agent
+from pydantic_ai import Agent, ModelRetry
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
@@ -91,6 +92,10 @@ def build_instructions(memories: list[str], memory_enabled: bool = True) -> list
         "You draft email replies for Alexey. Return a ready-to-edit reply, "
         "with Subject: and the email body in plain text. Avoid explanatory "
         "preambles, markdown fences, and invented commitments or personal facts.",
+        "Do not use em dashes, en dashes, or hyphens as sentence punctuation. "
+        "Use commas, periods, or parentheses instead. Do not start list items "
+        "with dashes; use short paragraphs or numbered lists. Preserve a hyphen "
+        "only when it is part of an exact name, email address, URL, or identifier.",
         "No sponsorship catalog, prices, course policies, or calendar availability "
         "have been supplied. Do not invent packages, benefits, prerequisites, "
         "links, or availability. Ask for missing information instead. For sponsor "
@@ -102,6 +107,11 @@ def build_instructions(memories: list[str], memory_enabled: bool = True) -> list
         "Apply general preferences and rules for the matching email category "
         "only. Speaker invitation rules do not apply to sponsor inquiries or "
         "student questions. Retrieved rules are candidates, not necessarily relevant.",
+        "When memory is enabled, before returning each draft, call "
+        "report_memory_usage with only the exact memory strings you actually "
+        "apply, including their [category] prefixes. Exclude irrelevant or "
+        "overridden preferences. Pass an empty list when none apply. Finish "
+        "searching and saving before reporting usage. Never invent a memory.",
         "When the user corrects a draft, revise it. If the correction is reusable "
         "and memory is enabled, save each new rule before returning the revised "
         "draft. Keep conditions such as 'before accepting' in the saved rule. "
@@ -119,12 +129,65 @@ def build_agent(memories: list[str], memory_enabled: bool = True) -> Agent:
     Create the chat agent with its memories and tools.
     """
 
-    return Agent(
+    available = set(memories)
+    usage_reported = False
+    persist = save_memory
+    retrieve = search_memory
+
+    def save_preference(
+        content: str,
+        category: Literal["general", "speaker invitations", "sponsor inquiries", "student questions"],
+        rule: str,
+    ) -> str:
+        nonlocal usage_reported
+        usage_reported = False
+        result = persist(content, category, rule)
+        available.add(f"[{category}] {content}")
+        return result
+
+    def search_preferences(query: str) -> list[str]:
+        nonlocal usage_reported
+        usage_reported = False
+        found = retrieve(query)
+        available.update(found)
+        return found
+
+    # Keep the original tool names and descriptions in the model's schema.
+    save_preference.__name__ = "save_memory"
+    save_preference.__doc__ = persist.__doc__
+    search_preferences.__name__ = "search_memory"
+    search_preferences.__doc__ = retrieve.__doc__
+
+    def report_memory_usage(items: list[str]) -> dict:
+        """Report the exact available memories applied to the forthcoming draft.
+
+        Copy complete strings including [category]. Include only preferences
+        that influence this draft. Use [] when none apply. Call after any saves
+        or searches. This reports selection, not a new memory to persist.
+        """
+        nonlocal usage_reported
+        if any(item not in available for item in items):
+            raise ModelRetry("Only report exact retrieved or newly saved memory strings, including [category].")
+        usage_reported = True
+        return {"used": list(dict.fromkeys(items))}
+
+    drafting_agent = Agent(
         MODEL,
         instructions=build_instructions(memories, memory_enabled),
-        tools=[save_memory, search_memory] if memory_enabled else [],
+        tools=[save_preference, search_preferences, report_memory_usage] if memory_enabled else [],
         model_settings=MODEL_SETTINGS,
+        retries=3,
     )
+
+    @drafting_agent.output_validator
+    def validate_draft(output: str) -> str:
+        if memory_enabled and not usage_reported:
+            raise ModelRetry("Call report_memory_usage before returning your draft, even if no memories apply.")
+        if re.search(r"[\u2013\u2014]|\s-\s|(?m:^\s*-\s)", output):
+            raise ModelRetry("Rewrite without dash punctuation or dash-led lists. Use sentences or numbered lists.")
+        return output
+
+    return drafting_agent
 
 
 def load_memories(query: str) -> list[str]:
@@ -206,6 +269,8 @@ async def node_events(node, run):
     Yield the events of one agent step: text tokens or tool activity.
     """
     if Agent.is_model_request_node(node):
+        # A tool round or validation retry starts a new candidate draft.
+        yield {"type": "draft_reset"}
         async with node.stream(run.ctx) as stream:
             async for event in text_events(stream):
                 yield event

@@ -126,6 +126,8 @@ function resetDraft() {
   $('error').hidden = true
   $('memory-list').replaceChildren()
   $('memory-activity').replaceChildren()
+  $('used-memory-details').hidden = true
+  $('used-memory-list').replaceChildren()
   $('memory-summary').textContent = $('memory-enabled').checked ? 'Ready to learn' : 'Memory off'
   $('memory-explanation').textContent = $('memory-enabled').checked
     ? 'Relevant preferences are retrieved for each email. Corrections are saved as you revise.'
@@ -190,6 +192,22 @@ function activity(text, kind = '') {
   $('memory-activity').append(el)
 }
 
+function renderUsedMemories(items, enabled = true) {
+  $('used-memory-details').hidden = false
+  $('used-memory-details').open = items.length > 0
+  $('used-memory-count').textContent = enabled ? `${items.length} ${items.length === 1 ? 'preference' : 'preferences'}` : 'Memory off'
+  $('used-memory-note').textContent = !enabled
+    ? 'Saved memories were not used for this reply.'
+    : items.length ? 'Preferences the assistant reports applying to this reply.'
+      : 'The assistant did not select any saved preferences for this reply.'
+  $('used-memory-list').replaceChildren()
+  for (const content of items) {
+    const li = document.createElement('li')
+    li.textContent = content
+    $('used-memory-list').append(li)
+  }
+}
+
 function updateDraft(final = false) {
   // The agent returns plain text; separate the subject from the editable body.
   const match = draftText.match(/^\s*Subject:\s*([^\n]*)\n+/i)
@@ -214,6 +232,11 @@ async function requestDraft(correction = '') {
   $('draft-body').value = ''
   $('memory-activity').replaceChildren()
   savedMemories = []
+  $('used-memory-details').hidden = false
+  $('used-memory-details').open = false
+  $('used-memory-list').replaceChildren()
+  $('used-memory-count').textContent = 'Selecting…'
+  $('used-memory-note').textContent = 'Waiting for the assistant to select relevant preferences.'
   setBusy(true)
   let completed = false
   const pendingTools = new Map()
@@ -238,12 +261,17 @@ async function requestDraft(correction = '') {
         if (!line) continue
         const event = JSON.parse(line.slice(6))
         switch (event.type) {
+          case 'draft_reset':
+            draftText = ''
+            $('draft-body').value = ''
+            break
           case 'text':
             draftText += event.delta
             updateDraft()
             break
           case 'memories':
             loadedMemories = event.items ?? []
+            if (!event.enabled) renderUsedMemories([], false)
             renderMemories()
             activity(event.enabled ? `Searched VectorAI DB · ${loadedMemories.length} candidate preferences retrieved` : 'Memory disabled for this conversation')
             break
@@ -265,6 +293,16 @@ async function requestDraft(correction = '') {
               renderMemories()
             } else if (event.name === 'search_memory' && args) {
               activity(`Search complete · ${args.query}`)
+              if (event.result.startsWith('[')) {
+                const found = JSON.parse(event.result)
+                if (Array.isArray(found)) {
+                  loadedMemories = [...new Set([...loadedMemories, ...found])]
+                  renderMemories()
+                }
+              }
+            } else if (event.name === 'report_memory_usage' && event.result.startsWith('{')) {
+              const report = JSON.parse(event.result)
+              if (Array.isArray(report.used)) renderUsedMemories(report.used)
             }
             pendingTools.delete(event.call_id)
             break
@@ -289,7 +327,7 @@ async function requestDraft(correction = '') {
   } finally {
     setBusy(false)
     $('draft-status').textContent = completed ? 'Draft · editable' : 'Could not complete draft'
-    $('copy').disabled = !$('draft-body').value.trim()
+    $('copy').disabled = !completed || !$('draft-body').value.trim()
   }
 }
 
