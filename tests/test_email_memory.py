@@ -27,7 +27,7 @@ class MemoryTests(unittest.TestCase):
 
     def test_disabled_session_does_not_read_or_write_memory(self):
         with patch.object(memory, 'recall', side_effect=AssertionError('read')):
-            session = agent.Session(memory_enabled=False)
+            session = server.Session(memory_enabled=False)
             session.refresh('Draft a speaker invitation reply')
         self.assertEqual(session.memories, [])
         self.assertEqual(session.agent._function_toolset.tools, {})
@@ -49,7 +49,7 @@ class MemoryTests(unittest.TestCase):
 
     def test_search_uses_current_request(self):
         with patch.object(memory, 'recall', return_value=[]) as recall:
-            session = agent.Session()
+            session = server.Session()
             session.refresh('Reply to the CloudNest sponsor inquiry')
         recall.assert_called_once_with('Reply to the CloudNest sponsor inquiry', limit=8)
 
@@ -106,7 +106,7 @@ class MemoryTests(unittest.TestCase):
         self.assertFalse(ctx.deps.usage_reported)
 
     def test_request_context_is_replaced_when_memories_are_refreshed(self):
-        session = agent.Session()
+        session = server.Session()
         previous = session.context
         previous.available.add('[general] Old rule')
         previous.usage_reported = True
@@ -162,7 +162,7 @@ class StreamingTests(unittest.IsolatedAsyncioTestCase):
             yield FunctionToolCallEvent(ToolCallPart('save_memory', {'content': 'warm'}, 'tone-call'))
             yield FunctionToolResultEvent(ToolReturnPart('save_memory', 'Saved: short', 'length-call'))
             yield FunctionToolResultEvent(ToolReturnPart('save_memory', 'Saved: warm', 'tone-call'))
-        events = [event async for event in agent.tool_events(stream())]
+        events = [event async for event in server.tool_events(stream())]
         self.assertEqual([event['call_id'] for event in events],
                          ['length-call', 'tone-call', 'length-call', 'tone-call'])
 
