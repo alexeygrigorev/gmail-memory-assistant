@@ -1,15 +1,14 @@
-"""The Gmail drafting agent: instructions, tools, and output validation.
+"""The Gmail drafting agent: instructions and tools.
 
 The local API in server.py uses this agent to draft Gmail replies.
 Memory operations are exposed as events to the extension.
 """
 
-import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Literal
 
-from pydantic_ai import Agent, ModelRetry, RunContext
+from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModelSettings
 
 import memory
@@ -23,7 +22,6 @@ class DraftContext:
     """Memory provenance and reporting state for a single drafting request."""
 
     available: set[str] = field(default_factory=set)
-    usage_reported: bool = False
 
 
 def save_memory(
@@ -44,7 +42,6 @@ def save_memory(
     """
     memory.remember(content, category, rule)
     ctx.deps.available.add(f"[{category}] {content}")
-    ctx.deps.usage_reported = False
     print(f"[memory] SAVED: {content}")
     return f"Saved to long-term memory: [{category}] {content}"
 
@@ -58,7 +55,6 @@ def search_memory(ctx: RunContext[DraftContext], query: str) -> list[str]:
     """
     found = memory.recall(query)
     ctx.deps.available.update(found)
-    ctx.deps.usage_reported = False
     print(f'[memory] SEARCHED "{query}" -> {len(found)} results')
     return found
 
@@ -74,7 +70,6 @@ def report_memory_usage(ctx: RunContext[DraftContext], items: list[str]) -> dict
     items = list(dict.fromkeys(items))
     used = [item for item in items if item in ctx.deps.available]
     unavailable = [item for item in items if item not in ctx.deps.available]
-    ctx.deps.usage_reported = True
     return {"used": used, **({"unavailable": unavailable} if unavailable else {})}
 
 
@@ -153,7 +148,7 @@ def build_agent(memories: list[str], memory_enabled: bool = True) -> Agent:
     Create the chat agent with its memories and tools.
     """
 
-    drafting_agent = Agent(
+    return Agent(
         MODEL,
         deps_type=DraftContext,
         instructions=build_instructions(memories, memory_enabled),
@@ -161,13 +156,3 @@ def build_agent(memories: list[str], memory_enabled: bool = True) -> Agent:
         model_settings=MODEL_SETTINGS,
         retries=3,
     )
-
-    @drafting_agent.output_validator
-    def validate_draft(ctx: RunContext[DraftContext], output: str) -> str:
-        if memory_enabled and not ctx.deps.usage_reported:
-            raise ModelRetry("Call report_memory_usage before returning your draft, even if no memories apply.")
-        if re.search(r"[\u2013\u2014]|\s-\s|(?m:^\s*-\s)", output):
-            raise ModelRetry("Rewrite without dash punctuation or dash-led lists. Use sentences or numbered lists.")
-        return output
-
-    return drafting_agent

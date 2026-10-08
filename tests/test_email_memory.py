@@ -96,56 +96,36 @@ class MemoryTests(unittest.TestCase):
             agent.search_memory(ctx, 'reply length')
         self.assertEqual(agent.report_memory_usage(ctx, [found]), {'used': [found]})
 
-    def test_save_updates_request_context_and_requires_a_new_usage_report(self):
-        ctx = SimpleNamespace(deps=agent.DraftContext(usage_reported=True))
+    def test_save_updates_request_context(self):
+        ctx = SimpleNamespace(deps=agent.DraftContext())
         with patch.object(memory, 'remember') as remember:
             result = agent.save_memory(ctx, 'Keep replies short.', 'general', 'length')
         remember.assert_called_once_with('Keep replies short.', 'general', 'length')
         self.assertIn('[general] Keep replies short.', result)
         self.assertEqual(ctx.deps.available, {'[general] Keep replies short.'})
-        self.assertFalse(ctx.deps.usage_reported)
 
     def test_request_context_is_replaced_when_memories_are_refreshed(self):
         session = server.Session()
         previous = session.context
         previous.available.add('[general] Old rule')
-        previous.usage_reported = True
         with patch.object(memory, 'recall', return_value=['[general] New rule']):
             session.refresh('Draft a reply')
         self.assertIsNot(session.context, previous)
         self.assertEqual(session.context.available, {'[general] New rule'})
-        self.assertFalse(session.context.usage_reported)
 
-    def test_dash_punctuation_triggers_a_rewrite(self):
+    def test_draft_completes_without_validation_retries_or_usage_report(self):
         calls = 0
 
         def respond(messages, info):
             nonlocal calls
             calls += 1
-            text = 'Hi Maya — thank you.\n- What is the date?' if calls == 1 else 'Hi Maya, thank you. What is the date?'
-            return ModelResponse(parts=[TextPart(text)])
-
-        drafting_agent = agent.build_agent([], memory_enabled=False)
-        with drafting_agent.override(model=FunctionModel(respond)):
-            result = drafting_agent.run_sync('Draft a reply', deps=agent.DraftContext())
-        self.assertEqual(calls, 2)
-        self.assertEqual(result.output, 'Hi Maya, thank you. What is the date?')
-
-    def test_draft_requires_an_explicit_memory_usage_report(self):
-        calls = 0
-
-        def respond(messages, info):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                return ModelResponse(parts=[ToolCallPart('report_memory_usage', {'items': []}, 'usage')])
-            return ModelResponse(parts=[TextPart('Hi Maya, thank you.')])
+            return ModelResponse(parts=[TextPart('Hi Maya — thank you.\n- What is the date?')])
 
         drafting_agent = agent.build_agent([])
         with drafting_agent.override(model=FunctionModel(respond)):
             result = drafting_agent.run_sync('Draft a reply', deps=agent.DraftContext())
-        self.assertEqual(calls, 3)
-        self.assertEqual(result.output, 'Hi Maya, thank you.')
+        self.assertEqual(calls, 1)
+        self.assertEqual(result.output, 'Hi Maya — thank you.\n- What is the date?')
 
 
 class StreamingTests(unittest.IsolatedAsyncioTestCase):
