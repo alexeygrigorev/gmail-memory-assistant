@@ -35,7 +35,7 @@ memories accumulate per conversation.
 
 ## Demo in Gmail
 
-Send the fictional messages from demo.md between two accounts you control.
+Follow the walkthrough in [demo.md](../demo.md) using messages between two accounts you control.
 Open the received invitation in Gmail and click Reply. Use memory off for
 an honest baseline when the database already contains preferences. Enable
 memory, enter the correction from demo.md, and generate again. Expand
@@ -44,7 +44,7 @@ Preferences used to inspect the actual reported rule.
 Open the other invitation and generate without repeating the correction.
 Each conversation uses its Gmail thread ID, including modern alphanumeric
 IDs. Compare with memory off and check the sponsorship email for relevance.
-Insert into draft verifies Gmail editing; sending the reply is optional.
+Drafts appear in Gmail's reply editor; sending the reply is optional.
 
 After editing extension files, reload mem-hub on chrome://extensions and
 refresh Gmail. Preferences persist in the database.
