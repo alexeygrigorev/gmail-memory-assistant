@@ -21,6 +21,10 @@ from pydantic_ai.messages import (
 
 
 class MemoryTests(unittest.TestCase):
+    def test_backend_has_no_frontend_build_dependency(self):
+        self.assertEqual(server.index(), {'status': 'ok', 'service': 'mem-hub'})
+        self.assertNotIn('/assets', [route.path for route in server.app.routes])
+
     def test_disabled_session_does_not_read_or_write_memory(self):
         with patch.object(memory, 'recall', side_effect=AssertionError('read')):
             session = agent.Session(memory_enabled=False)

@@ -1,16 +1,10 @@
-"""Web server for the memory chat agent.
-
-The agent comes from agent.py, so this is the same agent as chat.py,
-but over HTTP: the browser posts a question and gets a
-Server-Sent-Events stream back, so text appears token by token and
-every tool call shows up the moment it happens.
+"""Local API for the Gmail extension's memory-powered drafting agent.
 
 Run it:
 
     uv run uvicorn server:app --port 8000
 
-Then open the Vite dev server (web/, port 5173) or, after
-`cd web && npm run build`, the same page directly at http://localhost:8000.
+The extension posts drafting requests and receives Server-Sent-Events.
 """
 
 import asyncio
@@ -18,8 +12,7 @@ import json
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from agent import Session
@@ -96,11 +89,6 @@ def reset_session(name: str) -> dict:
     return {"ok": True}
 
 
-# Serve the built frontend, so `npm run build` is enough for a
-# one-process demo. Directory is created by the Vite build.
-app.mount("/assets", StaticFiles(directory="web/dist/assets"), name="assets")
-
-
 @app.get("/")
-def index() -> FileResponse:
-    return FileResponse("web/dist/index.html")
+def index() -> dict:
+    return {"status": "ok", "service": "mem-hub"}

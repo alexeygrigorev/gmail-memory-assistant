@@ -1,9 +1,7 @@
 """The memory agent: tools, instructions, memory, and sessions.
 
-All agent definitions live in this one module, so the terminal chat
-(chat.py) and the web server (server.py) run exactly the same agent.
-The tools print what they do, so every memory operation stays
-visible during the demo.
+The local API in server.py uses this agent to draft Gmail replies.
+Memory operations are exposed as events to the extension.
 """
 
 import json
