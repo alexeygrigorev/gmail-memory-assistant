@@ -14,16 +14,16 @@ for long-term memory.
 
 ## How memory works
 
-1. **Draft.** You click **✦ Draft reply** in Gmail. The server retrieves the
+1. Draft. You click "✦ Draft" in Gmail. The server retrieves the
    saved rules most similar to the email and gives them to the agent.
-2. **Correct.** You click **Refine** and describe what to change. The agent
+2. Correct. You click Refine and describe what to change. The agent
    revises the draft and, if the correction is reusable, saves it with its
    `save_memory` tool as a rule tagged with an email category: general,
    speaker invitations, sponsor inquiries, or student questions.
-3. **Reuse.** On the next email, the agent applies only the rules whose
+3. Reuse. On the next email, the agent applies only the rules whose
    category matches. Speaker invitation rules stay out of sponsorship replies.
-4. **Inspect.** Before returning a draft, the agent reports which rules it
-   applied. The **Memory** indicator in Gmail lists them, and the server drops
+4. Inspect. Before returning a draft, the agent reports which rules it
+   applied. The Memory indicator in Gmail lists them, and the server drops
    any rule the agent names that it was never given.
 
 Each Gmail thread keeps its own conversation history. Saved rules are shared
@@ -69,12 +69,12 @@ The extension isn't in the Chrome Web Store, so you load it from this
 repository as an unpacked extension:
 
 1. Open `chrome://extensions` in Chrome.
-2. Turn on **Developer mode** in the top-right corner.
-3. Click **Load unpacked** and select the `extension` folder inside the clone.
-   **mem-hub for Gmail** appears in the extension list.
+2. Turn on Developer mode in the top-right corner.
+3. Click Load unpacked and select the `extension` folder inside the clone.
+   mem-hub for Gmail appears in the extension list.
 4. Refresh any open Gmail tabs. The extension only adds its controls to pages
    loaded after it was installed.
-5. Open an email and click **Reply**. If **✦ Draft reply** appears above the
+5. Open an email and click Reply. If ✦ Draft reply appears above the
    message body, the extension is working.
 
 The extension talks to the backend at `http://localhost:8000`, so keep the
@@ -86,15 +86,15 @@ reload icon on the extension's card in `chrome://extensions` and refresh Gmail.
 
 ## Use it in Gmail
 
-1. Open an email, click **Reply**, then click **✦ Draft reply** above the
+1. Open an email, click Reply, then click ✦ Draft reply above the
    message body. The draft appears in Gmail's editor.
-2. Click **Refine**, type a correction, and click **✦ Draft again**.
-3. Click **Memory** in the top-right corner to see which saved rules were
-   used. **Memory · 0** means no saved rules applied to this draft.
+2. Click Refine, type a correction, and click ✦ Draft again.
+3. Click Memory in the top-right corner to see which saved rules were
+   used. Memory · 0 means no saved rules applied to this draft.
 4. Review the reply and send it from Gmail as usual. The extension never sends
    mail.
 
-Memory is always on. The **⚙** menu's **Reset conversation** clears the
+Memory is always on. The ⚙ menu's Reset conversation clears the
 current thread's history but keeps saved rules.
 
 For a scripted walkthrough with three test emails, see [demo.md](demo.md).
@@ -109,7 +109,7 @@ uv run python reset.py --dry-run   # check the storage path, change nothing
 uv run python reset.py             # delete all collections and restart the container
 ```
 
-This wipes **every collection** in this repository's `local_data` database.
+This wipes every collection in this repository's `local_data` database.
 Restart the backend and refresh Gmail afterward. If your container isn't
 named `vectorai`, pass `--container NAME`.
 
