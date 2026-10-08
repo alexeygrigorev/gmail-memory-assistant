@@ -1,5 +1,5 @@
 [project]
-name = "mem-hub"
+name = "gmail-memory-assistant"
 version = "0.1.0"
 description = "AI agent with long-term memory — pydantic-ai + VectorAI DB"
 requires-python = ">=3.12"

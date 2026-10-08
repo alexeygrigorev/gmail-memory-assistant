@@ -1,7 +1,7 @@
-# mem-hub for Gmail
+# Gmail Memory Assistant
 
 Chrome MV3 extension that adds a memory-powered drafting panel to Gmail's
-compose window. Drafts come from the mem-hub agent on
+compose window. Drafts come from the gmail-memory-assistant agent on
 http://localhost:8000 - the server already serves CORS `*`, so no
 backend changes are needed.
 
@@ -46,5 +46,5 @@ Each conversation uses its Gmail thread ID, including modern alphanumeric
 IDs. Check the sponsorship email for relevance.
 Drafts appear in Gmail's reply editor; sending the reply is optional.
 
-After editing extension files, reload mem-hub on chrome://extensions and
+After editing extension files, reload gmail-memory-assistant on chrome://extensions and
 refresh Gmail. Preferences persist in the database.

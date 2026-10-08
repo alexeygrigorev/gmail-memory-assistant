@@ -1,11 +1,11 @@
-# mem-hub for Gmail
+# Gmail Memory Assistant
 
 A Chrome extension that drafts Gmail replies and remembers how you correct
 them. Tell it once that speaker invitations should stay under 100 words and
 ask about the audience, and every later invitation reply follows that rule,
 in any thread and after restarts.
 
-![A Gmail reply drafted by mem-hub, with the Memory panel showing the saved rule it applied](docs/gmail-draft.png)
+![A Gmail reply drafted by gmail-memory-assistant, with the Memory panel showing the saved rule it applied](docs/gmail-draft.png)
 
 The backend is a [pydantic-ai](https://ai.pydantic.dev/) agent behind a local
 FastAPI server. It uses an OpenAI model for drafting, local embeddings
@@ -35,8 +35,8 @@ Requirements: Docker, [uv](https://docs.astral.sh/uv/), Python 3.12+, Chrome,
 and an OpenAI API key. Clone the repository and run all commands from it:
 
 ```bash
-git clone https://github.com/alexeygrigorev/mem-hub.git
-cd mem-hub
+git clone https://github.com/alexeygrigorev/gmail-memory-assistant.git
+cd gmail-memory-assistant
 ```
 
 ### 1. Start VectorAI DB
@@ -71,7 +71,7 @@ repository as an unpacked extension:
 1. Open `chrome://extensions` in Chrome.
 2. Turn on Developer mode in the top-right corner.
 3. Click Load unpacked and select the `extension` folder inside the clone.
-   mem-hub for Gmail appears in the extension list.
+   Gmail Memory Assistant appears in the extension list.
 4. Refresh any open Gmail tabs. The extension only adds its controls to pages
    loaded after it was installed.
 5. Open an email and click Reply. If ✦ Draft reply appears above the

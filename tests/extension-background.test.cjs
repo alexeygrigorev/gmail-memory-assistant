@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 function setup(fetch){
  let connect,message,disconnect;const sent=[];
- const port={name:'mem-hub',onMessage:{addListener:f=>message=f},onDisconnect:{addListener:f=>disconnect=f},postMessage:event=>{if(port.closed)throw Error('disconnected');sent.push(event)}};
+ const port={name:'gmail-memory-assistant',onMessage:{addListener:f=>message=f},onDisconnect:{addListener:f=>disconnect=f},postMessage:event=>{if(port.closed)throw Error('disconnected');sent.push(event)}};
  const chrome={runtime:{lastError:undefined,onConnect:{addListener:f=>connect=f}}};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../extension/background.js'),'utf8'),{chrome,fetch,AbortController,TextDecoder});connect(port);
  return {sent,send:msg=>message(msg),disconnect:()=>{port.closed=true;disconnect()}};

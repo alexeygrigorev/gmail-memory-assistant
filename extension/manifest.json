@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "mem-hub for Gmail",
+  "name": "Gmail Memory Assistant",
   "version": "0.1.0",
-  "description": "Draft Gmail replies with the mem-hub memory agent running on localhost.",
+  "description": "Draft Gmail replies that remember your preferences, using a local backend.",
   "host_permissions": [
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*"

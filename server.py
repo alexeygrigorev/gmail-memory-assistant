@@ -245,4 +245,4 @@ def reset_session(name: str) -> dict:
 
 @app.get("/")
 def index() -> dict:
-    return {"status": "ok", "service": "mem-hub"}
+    return {"status": "ok", "service": "gmail-memory-assistant"}

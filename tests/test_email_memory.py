@@ -24,7 +24,7 @@ from pydantic_ai.messages import (
 
 class MemoryTests(unittest.TestCase):
     def test_backend_has_no_frontend_build_dependency(self):
-        self.assertEqual(server.index(), {'status': 'ok', 'service': 'mem-hub'})
+        self.assertEqual(server.index(), {'status': 'ok', 'service': 'gmail-memory-assistant'})
         self.assertNotIn('/assets', [route.path for route in server.app.routes])
 
     def test_sessions_always_load_memory_and_register_memory_tools(self):

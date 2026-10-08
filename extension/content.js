@@ -1,6 +1,6 @@
-// mem-hub for Gmail - content script.
+// Gmail Memory Assistant - content script.
 // Watches for compose windows, attaches a drafting panel to each, and
-// talks to the local mem-hub server through the background worker.
+// talks to the local gmail-memory-assistant server through the background worker.
 
 const EDITABLE_SELECTOR = '.Am.Al.editable[contenteditable="true"], div[contenteditable="true"][aria-label^="Message Body"], div[contenteditable="true"][role="textbox"][aria-multiline="true"]';
 // Gmail reuses compose containers and can replace their editor or its siblings.
@@ -83,9 +83,9 @@ function attachPanel(editable) {
           <ul></ul>
         </div>
       </details>
-      <details class="memhub-settings"><summary aria-label="Drafting settings" title="mem-hub settings">⚙</summary>
+      <details class="memhub-settings"><summary aria-label="Drafting settings" title="Gmail Memory Assistant settings">⚙</summary>
         <div class="memhub-popover">
-          <span class="memhub-title">mem-hub</span>
+          <span class="memhub-title">Gmail Memory Assistant</span>
           <button type="button" class="memhub-reset">Reset conversation</button>
         </div>
       </details>
@@ -162,7 +162,7 @@ function wire(panel, editable) {
   let port;
   function getPort() {
     if (!port) {
-      port = chrome.runtime.connect({ name: 'mem-hub' });
+      port = chrome.runtime.connect({ name: 'gmail-memory-assistant' });
       port.onMessage.addListener(onMessage);
       const connectedPort = port;
       port.onDisconnect.addListener(() => {

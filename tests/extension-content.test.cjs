@@ -38,7 +38,7 @@ test('attaches to an inline editor without depending on Gmail container classes'
 });
 
 test('replacing an editor inside a reused marked container attaches fresh controls', async () => {
-  const f = fixture(`<div class="ip" data-mem-hub-panel="1">${editor}</div>`);
+  const f = fixture(`<div class="ip" data-gmail-memory-assistant-panel="1">${editor}</div>`);
   const container = f.document.querySelector('.ip');
   container.innerHTML = editor;
   await f.flush();

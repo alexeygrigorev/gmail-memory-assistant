@@ -1,4 +1,4 @@
-// mem-hub for Gmail - background service worker.
+// Gmail Memory Assistant - background service worker.
 // Gmail's page CSP would block content-script fetches to localhost, so
 // the panel asks this worker, which streams the SSE reply back over
 // the port, one postMessage per event.
@@ -6,7 +6,7 @@
 const SERVER = "http://localhost:8000";
 
 chrome.runtime.onConnect.addListener((port) => {
-  if (port.name !== "mem-hub") return;
+  if (port.name !== "gmail-memory-assistant") return;
   let disconnected = false;
   const requests = new Set();
   port.onDisconnect.addListener(() => {
