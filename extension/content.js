@@ -103,7 +103,11 @@ function wire(panel, editable) {
   const refinement = panel.querySelector('.memhub-refinement');
   const refine = panel.querySelector('.memhub-refine');
   function syncRefine() {
-    refine.hidden = !(editable.innerText ?? editable.textContent).replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    // Gmail inserts the Gemini writing hint into the editor as a noneditable
+    // span. innerText includes that hint even though the reply is empty.
+    const body = editable.cloneNode(true);
+    body.querySelectorAll('[contenteditable="false"], [aria-hidden="true"]').forEach(node => node.remove());
+    refine.hidden = !body.textContent.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
     if (refine.hidden) {
       refinement.hidden = true;
       refine.setAttribute('aria-expanded', 'false');
