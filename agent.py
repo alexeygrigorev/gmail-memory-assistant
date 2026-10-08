@@ -46,7 +46,7 @@ def save_memory(
     """
     memory.remember(content, category, rule)
     print(f"[memory] SAVED: {content}")
-    return f"Saved to long-term memory: {content}"
+    return f"Saved to long-term memory: [{category}] {content}"
 
 
 def search_memory(query: str) -> list[str]:
@@ -115,7 +115,10 @@ def build_instructions(memories: list[str], memory_enabled: bool = True) -> list
         "report_memory_usage with only the exact memory strings you actually "
         "apply, including their [category] prefixes. Exclude irrelevant or "
         "overridden preferences. Pass an empty list when none apply. Finish "
-        "searching and saving before reporting usage. Never invent a memory.",
+        "searching and saving before reporting usage. Never invent a memory. "
+        "Memories mentioned in earlier conversation turns may have been reset "
+        "or replaced. Report only rules available in this request's retrieved "
+        "rules or its search/save results. If none are available, report [].",
         "When the user corrects a draft, revise it. If the correction is reusable "
         "and memory is enabled, save each new rule before returning the revised "
         "draft. Keep conditions such as 'before accepting' in the saved rule. "
@@ -170,10 +173,15 @@ def build_agent(memories: list[str], memory_enabled: bool = True) -> Agent:
         or searches. This reports selection, not a new memory to persist.
         """
         nonlocal usage_reported
-        if any(item not in available for item in items):
-            raise ModelRetry("Only report exact retrieved or newly saved memory strings, including [category].")
+        # A stale or paraphrased usage report must not prevent drafting. Keep
+        # provenance strict by excluding unavailable strings from the UI.
+        used = list(dict.fromkeys(item for item in items if item in available))
+        unavailable = list(dict.fromkeys(item for item in items if item not in available))
         usage_reported = True
-        return {"used": list(dict.fromkeys(items))}
+        result = {"used": used}
+        if unavailable:
+            result["unavailable"] = unavailable
+        return result
 
     drafting_agent = Agent(
         MODEL,

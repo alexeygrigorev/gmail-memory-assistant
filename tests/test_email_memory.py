@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 import agent
 import memory
 import server
-from pydantic_ai import ModelRetry
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
@@ -63,13 +62,32 @@ class MemoryTests(unittest.TestCase):
         server.reset_session('comparison')
         self.assertFalse(server.sessions)
 
-    def test_usage_report_rejects_memories_not_available_to_the_agent(self):
+    def test_usage_report_excludes_memories_not_available_to_the_agent(self):
         stored = '[speaker invitations] Ask about the audience.'
         tools = agent.build_agent([stored])._function_toolset.tools
         report = tools['report_memory_usage'].function
         self.assertEqual(report([stored, stored]), {'used': [stored]})
-        with self.assertRaises(ModelRetry):
-            report(['[general] An invented preference'])
+        self.assertEqual(report([stored, '[general] An invented preference']), {
+            'used': [stored], 'unavailable': ['[general] An invented preference'],
+        })
+
+    def test_stale_usage_after_memory_reset_does_not_block_the_draft(self):
+        calls = 0
+
+        def respond(messages, info):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                return ModelResponse(parts=[ToolCallPart('report_memory_usage', {
+                    'items': ['[speaker invitations] A rule from before the reset'],
+                }, 'usage')])
+            return ModelResponse(parts=[TextPart('Hi Daniel, thanks for the invitation.')])
+
+        drafting_agent = agent.build_agent([])
+        with drafting_agent.override(model=FunctionModel(respond)):
+            result = drafting_agent.run_sync('Draft a reply')
+        self.assertEqual(calls, 2)
+        self.assertEqual(result.output, 'Hi Daniel, thanks for the invitation.')
 
     def test_usage_report_can_include_additional_search_results(self):
         found = '[general] Keep replies concise.'
