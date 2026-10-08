@@ -70,6 +70,14 @@ function attachPanel(editable) {
       <button type="button" class="memhub-go">✦ Draft reply</button>
       <button type="button" class="memhub-refine" aria-expanded="false" hidden>Refine</button>
       <span class="memhub-log" role="status" aria-live="polite"></span>
+      <details class="memhub-used" data-state="idle">
+        <summary aria-label="Memory usage for this draft">Memory on</summary>
+        <div class="memhub-memory-popover">
+          <strong>Memories used for this draft</strong>
+          <p class="memhub-memory-note">Generate a reply to see which saved preferences the assistant applies.</p>
+          <ul></ul>
+        </div>
+      </details>
       <details class="memhub-settings"><summary aria-label="Drafting settings" title="mem-hub settings">⚙</summary>
         <div class="memhub-popover">
           <span class="memhub-title">mem-hub</span>
@@ -80,7 +88,6 @@ function attachPanel(editable) {
     </div>
     <div class="memhub-refinement" hidden><textarea class="memhub-instr" rows="2"
       aria-label="Refine your reply" placeholder="What would you like to change?"></textarea></div>
-    <details class="memhub-used" hidden><summary>Preferences used</summary><ul></ul></details>
     <pre class="memhub-out" hidden></pre>
     <button type="button" class="memhub-insert" hidden>Use this draft</button>`;
   // Anchor controls above the editor so Gmail's minimum editor height does
@@ -99,6 +106,24 @@ function wire(panel, editable) {
   let draft = "";
   let originalBody = "";
   const used = panel.querySelector('.memhub-used');
+  const settings = panel.querySelector('.memhub-settings');
+  let usageReported = false;
+  let generationStarted = false;
+  function showMemory(state, label, note, items = []) {
+    used.dataset.state = state;
+    used.querySelector('summary').textContent = label;
+    used.querySelector('.memhub-memory-note').textContent = note;
+    used.querySelector('ul').replaceChildren(...items.map(content => {
+      const item = document.createElement('li'); item.textContent = content; return item;
+    }));
+  }
+  for (const [details, other] of [[used, settings], [settings, used]]) {
+    details.addEventListener('toggle', () => { if (details.open) other.open = false; });
+  }
+  memBox.addEventListener('change', () => {
+    if (!generationStarted) showMemory(memBox.checked ? 'idle' : 'off', memBox.checked ? 'Memory on' : 'Memory off',
+      memBox.checked ? 'Generate a reply to see which saved preferences the assistant applies.' : 'Saved preferences are disabled for the next draft.');
+  });
   const instructionBox = panel.querySelector('.memhub-instr');
   const refinement = panel.querySelector('.memhub-refinement');
   const refine = panel.querySelector('.memhub-refine');
@@ -146,7 +171,10 @@ function wire(panel, editable) {
         void chrome.runtime.lastError;
         if (port !== connectedPort) return;
         port = null;
-        if (btn.disabled) log.textContent = 'Connection interrupted. Try again, or refresh Gmail after reloading the extension.';
+        if (btn.disabled) {
+          log.textContent = 'Connection interrupted. Try again, or refresh Gmail after reloading the extension.';
+          showMemory('error', 'Memory · unavailable', 'The connection was interrupted before the draft completed.');
+        }
         btn.disabled = false;
       });
     }
@@ -161,6 +189,7 @@ function wire(panel, editable) {
         port = null;
         btn.disabled = false;
         log.textContent = 'Refresh Gmail to reconnect to the extension.';
+        showMemory('error', 'Memory · unavailable', 'Refresh Gmail to reconnect before generating a draft.');
       }
     }
   }
@@ -186,21 +215,24 @@ function wire(panel, editable) {
           try {
             const report = typeof event.result === 'string' ? JSON.parse(event.result) : event.result;
             if (Array.isArray(report.used)) {
-              used.hidden = report.used.length === 0;
-              used.querySelector('summary').textContent = `${report.used.length} preference${report.used.length === 1 ? '' : 's'} used`;
-              used.querySelector('ul').replaceChildren(...report.used.map(content => {
-                const item = document.createElement('li'); item.textContent = content; return item;
-              }));
+              const items = [...new Set(report.used.filter(item => typeof item === 'string'))];
+              usageReported = true;
+              showMemory(items.length ? 'used' : 'empty', `Memory · ${items.length}`,
+                items.length ? 'The assistant reports applying these saved preferences.' : 'No saved preferences were used for this draft.', items);
             }
           } catch { /* A failed tool result is shown by subsequent stream events. */ }
         }
         break;
       case "error":
         log.textContent = event.message;
+        showMemory('error', 'Memory · unavailable', 'Drafting failed. Memory usage for this attempt could not be confirmed.');
         btn.disabled = false;
         break;
       case "done":
         btn.disabled = false;
+        if (!usageReported && used.dataset.state === 'pending') {
+          showMemory('error', 'Memory · unavailable', 'The assistant did not provide a memory usage report for this draft.');
+        }
         if (draft && editable.innerText === originalBody) {
           applyDraft();
           log.textContent = "Draft ready";
@@ -230,7 +262,11 @@ function wire(panel, editable) {
     insertBtn.hidden = true;
     btn.disabled = true;
     log.textContent = "Drafting…";
-    used.hidden = true;
+    usageReported = false;
+    generationStarted = true;
+    used.open = false;
+    showMemory(memBox.checked ? 'pending' : 'off', memBox.checked ? 'Memory …' : 'Memory off',
+      memBox.checked ? 'Checking which saved preferences are applied to this draft.' : 'Saved preferences were disabled for this draft.');
     sendMessage({
       type: "chat",
       session: threadId(editable),

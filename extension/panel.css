@@ -8,7 +8,7 @@
 .memhub-panel .memhub-go:hover{background:#f6fafe;border-color:#d2e3fc}
 .memhub-panel button:disabled{color:#9aa0a6;cursor:default;background:transparent}
 .memhub-log{font-size:12px;color:#80868b}
-.memhub-settings{position:relative;margin-left:auto}
+.memhub-settings{position:relative}
 .memhub-settings>summary{list-style:none;cursor:pointer;padding:4px 8px;font-size:17px;color:#80868b;border-radius:50%}
 .memhub-settings>summary::-webkit-details-marker{display:none}
 .memhub-settings>summary:hover{background:#f1f3f4}
@@ -19,8 +19,14 @@
 .memhub-refinement{margin:10px 0 4px}
 .memhub-instr{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #dadce0;border-radius:8px;padding:8px 10px;font:13px/1.5 Arial,sans-serif;color:#3c4043;background:#fff;outline:none}
 .memhub-instr:focus{border-color:#1a73e8}
-.memhub-used{margin-top:6px;font-size:11px;color:#80868b}
-.memhub-used>summary{cursor:pointer}
-.memhub-used ul{padding-left:18px;margin:6px 0;line-height:1.5;max-height:140px;overflow:auto}
+.memhub-used{position:relative;margin-left:auto;font-size:12px;color:#80868b}
+.memhub-used>summary{list-style:none;cursor:pointer;border:1px solid #dadce0;border-radius:16px;padding:4px 10px;white-space:nowrap}
+.memhub-used>summary::-webkit-details-marker{display:none}
+.memhub-used>summary:hover{background:#f1f3f4}
+.memhub-used[data-state="used"]>summary{color:#1a73e8;border-color:#d2e3fc;background:#f6fafe}
+.memhub-memory-popover{position:absolute;right:0;top:34px;width:300px;max-width:calc(100vw - 80px);box-sizing:border-box;padding:14px;background:#fff;border:1px solid #dadce0;border-radius:10px;box-shadow:0 4px 16px #0002;z-index:6;color:#3c4043}
+.memhub-memory-popover strong{font-size:12px;font-weight:500}
+.memhub-memory-note{margin:6px 0;font-size:12px;color:#5f6368}
+.memhub-used ul{padding-left:18px;margin:6px 0 0;line-height:1.5;max-height:180px;overflow:auto;font-size:12px}
 .memhub-out{white-space:pre-wrap;background:#f8f9fa;border-radius:8px;padding:12px;max-height:220px;overflow:auto;font:13px/1.5 Arial,sans-serif;color:#202124}
 .memhub-panel .memhub-insert{color:#1a73e8}

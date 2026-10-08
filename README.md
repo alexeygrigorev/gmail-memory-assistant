@@ -38,7 +38,8 @@ No frontend build is required.
 5. Click **Refine**, enter a correction, and click **✦ Draft again**.
 
 The **⚙** menu controls saved preferences and resets the current conversation.
-Expand the preference count to inspect the rules the agent reports applying.
+Click the top-right **Memory** indicator to inspect the rules the agent reports
+applying. It also shows when no rules were used or memory was disabled.
 You choose when to send the reply using Gmail.
 
 After editing extension files, reload it in `chrome://extensions` and refresh

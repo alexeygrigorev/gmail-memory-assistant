@@ -20,7 +20,9 @@ backend changes are needed.
   **✦ Draft again** to revise the current reply.
 - **⚙** contains **Use saved preferences** and **Reset conversation**.
   Reset clears this thread's server-side history; long-term memories stay.
-- Expand the preference count to inspect the rules used for the reply.
+- Click the **Memory** indicator in the top-right corner to inspect the rules
+  the assistant reports applying. **Memory · 0** means no preferences were used;
+  **Memory off** means they were disabled for that draft.
 - If you edit the message while generation is running, your edits are kept.
   Review the proposed reply and click **Use this draft** to replace them.
 

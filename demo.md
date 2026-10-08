@@ -13,7 +13,7 @@ with memory disabled using **⚙ → Use saved preferences**.
 
 Open **Speaking at the Berlin Data Forum** from Maya and click Gmail's **Reply**.
 Click **✦ Draft reply** above the message body. Review the reply and expand
-the preference count if it appears. With no saved preferences, no count appears.
+the top-right **Memory** indicator. **Memory · 0** means no preferences were used.
 The first reply may already ask sensible questions; the demonstration does not
 depend on it being bad.
 
@@ -53,7 +53,7 @@ Turn saved preferences back on afterward.
 
 Open **A possible partnership with DataTalks.Club** from Priya and draft a reply.
 Speaker-specific preferences should not apply to this sponsorship inquiry.
-With only speaker memories stored, no preference count should appear. General
+With only speaker memories stored, the indicator should show **Memory · 0**. General
 or previously saved sponsorship preferences can still apply.
 
 The result to demonstrate: one correction reduces repeated edits on the next
