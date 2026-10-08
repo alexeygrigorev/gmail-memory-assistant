@@ -6,6 +6,7 @@ const EDITABLE_SELECTOR = '.Am.Al.editable[contenteditable="true"], div[contente
 // Gmail reuses compose containers and can replace their editor or its siblings.
 // Track live editor/panel pairs instead of permanent flags on Gmail's nodes.
 const panels = new Map();
+const syncEditors = new WeakMap();
 
 function threadId(editable) {
   // Gmail URLs look like #inbox/18f2...; use the id as the chat session
@@ -50,7 +51,10 @@ function buildPrompt(instruction, previousDraft = "") {
 
 function attachPanel(editable) {
   const existing = panels.get(editable);
-  if (existing?.isConnected && existing.nextElementSibling === editable) return;
+  if (existing?.isConnected && existing.nextElementSibling === editable) {
+    syncEditors.get(editable)?.();
+    return;
+  }
   existing?.remove();
   editable.classList.add('memhub-editor');
 
@@ -64,7 +68,7 @@ function attachPanel(editable) {
   panel.innerHTML = `
     <div class="memhub-bar">
       <button type="button" class="memhub-go">✦ Draft reply</button>
-      <button type="button" class="memhub-refine" aria-expanded="false">Refine</button>
+      <button type="button" class="memhub-refine" aria-expanded="false" hidden>Refine</button>
       <span class="memhub-log" role="status" aria-live="polite"></span>
       <details class="memhub-settings"><summary aria-label="Drafting settings" title="mem-hub settings">⚙</summary>
         <div class="memhub-popover">
@@ -98,6 +102,17 @@ function wire(panel, editable) {
   const instructionBox = panel.querySelector('.memhub-instr');
   const refinement = panel.querySelector('.memhub-refinement');
   const refine = panel.querySelector('.memhub-refine');
+  function syncRefine() {
+    refine.hidden = !(editable.innerText ?? editable.textContent).replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    if (refine.hidden) {
+      refinement.hidden = true;
+      refine.setAttribute('aria-expanded', 'false');
+      instructionBox.value = '';
+    }
+  }
+  syncEditors.set(editable, syncRefine);
+  editable.addEventListener('input', syncRefine);
+  syncRefine();
   refine.addEventListener('click', () => {
     refinement.hidden = !refinement.hidden;
     refine.setAttribute('aria-expanded', String(!refinement.hidden));
@@ -111,6 +126,7 @@ function wire(panel, editable) {
     selection.removeAllRanges();
     selection.addRange(range);
     document.execCommand('insertText', false, draft);
+    syncRefine();
     out.hidden = true;
     insertBtn.hidden = true;
     btn.textContent = '✦ Draft again';
@@ -244,6 +260,7 @@ function scheduleScan() {
 }
 new MutationObserver(scheduleScan).observe(document.body, {
   childList: true,
+  characterData: true,
   subtree: true,
   attributes: true,
   attributeFilter: ['contenteditable', 'role', 'aria-label', 'aria-multiline', 'class'],
