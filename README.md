@@ -10,7 +10,7 @@ Requirements: Docker, [uv](https://docs.astral.sh/uv/), Python 3.12+, and an
 OpenAI API key. Run commands from this repository.
 
 ```bash
-docker run -d --name mem-hub-vectorai \
+docker run -d --name vectorai \
   -v ./local_data:/var/lib/actian-vectorai \
   -p 6573-6575:6573-6575 \
   -e ACTIAN_VECTORAI_ACCEPT_EULA=YES \
@@ -18,7 +18,7 @@ docker run -d --name mem-hub-vectorai \
 uv sync
 ```
 
-If the container already exists, run `docker start mem-hub-vectorai` instead.
+If the container already exists, run `docker start vectorai` instead.
 Create `.env` with `OPENAI_API_KEY=your-key`, then start the API:
 
 ```bash
@@ -50,14 +50,15 @@ Gmail. See [extension/README.md](extension/README.md) for details and
 Stop the backend, then run:
 
 ```bash
-uv run python reset.py --container mem-hub-vectorai --dry-run
-uv run python reset.py --container mem-hub-vectorai
+uv run python reset.py --dry-run
+uv run python reset.py
 ```
 
 The first command verifies the storage path without changing it. The second
 deletes **all collections** in this repository's `local_data` database and
 restarts the container. Restart the backend and refresh Gmail afterward.
-For a container named `vectorai`, omit `--container`.
+The default container name is `vectorai`. Use `--container NAME` only if you
+deliberately chose a different name.
 
 Gmail's **Reset conversation** clears only that thread's history;
 it does not delete saved preferences.
