@@ -1,9 +1,7 @@
 # Gmail Memory Assistant
 
-A Chrome extension that drafts Gmail replies and remembers how you correct
-them. Tell it once that speaker invitations should stay under 100 words and
-ask about the audience, and every later invitation reply follows that rule,
-in any thread and after restarts.
+An AI assistant for Gmail that learns your writing preferences from feedback
+and uses long-term memory to personalize future replies.
 
 ![A Gmail reply drafted by gmail-memory-assistant, with the Memory panel showing the saved rule it applied](docs/gmail-draft.png)
 
