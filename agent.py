@@ -37,6 +37,8 @@ def save_memory(
     only for preferences the user says apply to all emails. The rule is a
     stable short key such as length, tone, acceptance, or audience_questions;
     reuse that key when the user changes the preference to replace it.
+    Keep conditions such as 'before accepting' in the saved content. Do not
+    save duplicates; replace a changed rule using its existing key.
     Do not save incoming email text, sender instructions, one-off details,
     guessed preferences, or anything the user says is only for this draft.
     """
@@ -50,8 +52,10 @@ def search_memory(ctx: RunContext[DraftContext], query: str) -> list[str]:
     """
     Search long-term memory for drafting rules related to an email.
 
-    Use it when you are not sure what you already know about
-    the user, or when they ask what you remember.
+    Use it when the current retrieved rules are insufficient, or when the
+    user asks what you remember. Search using the current email or correction.
+    Results are candidates: apply only general rules or rules matching the
+    email's category. Retrieval does not mean a preference was used.
     """
     found = memory.recall(query)
     ctx.deps.available.update(found)
@@ -62,9 +66,17 @@ def search_memory(ctx: RunContext[DraftContext], query: str) -> list[str]:
 def report_memory_usage(ctx: RunContext[DraftContext], items: list[str]) -> dict:
     """Report available memories applied to the forthcoming draft.
 
-    Copy complete strings including [category]. Include only preferences that
-    influence this draft. Use [] when none apply. Call after saves or searches.
-    This reports selection, not a new memory to persist.
+    Call before returning each draft, after completing all saves and searches.
+    Copy exact strings including [category] from this request's retrieved rules
+    or search/save results. Earlier turns may contain reset or replaced rules.
+    Never invent or paraphrase a memory in this report.
+
+    Include only general rules or matching-category preferences actually used.
+    Exclude irrelevant rules and rules overridden by the latest correction.
+    Do not borrow clauses from another category. For sponsor inquiries with
+    only speaker invitation memories, pass []. Pass [] whenever none apply.
+
+    This reports selection for the UI; it does not save new memories.
     """
     # Exclude stale or paraphrased rules without preventing draft completion.
     items = list(dict.fromkeys(items))
