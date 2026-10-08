@@ -5,7 +5,6 @@ Memory operations are exposed as events to the extension.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -75,14 +74,6 @@ def report_memory_usage(ctx: RunContext[DraftContext], items: list[str]) -> dict
     if unavailable:
         result["unavailable"] = unavailable
     return result
-
-
-def get_current_date() -> str:
-    """
-    Return today's date and the current time.
-    """
-    print("[tools] CHECKED current date and time")
-    return datetime.now().strftime("%Y-%m-%d %H:%M (%A)")
 
 
 def build_instructions(memories: list[str]) -> list[str]:
