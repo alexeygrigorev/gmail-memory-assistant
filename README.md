@@ -1,13 +1,45 @@
 # mem-hub for Gmail
 
-A Chrome extension that drafts Gmail replies and learns reusable preferences
-from your corrections. Its local FastAPI backend uses an OpenAI model, local
-embeddings, and Actian VectorAI DB.
+A Chrome extension that drafts Gmail replies and remembers how you correct
+them. Tell it once that speaker invitations should stay under 100 words and
+ask about the audience, and every later invitation reply follows that rule,
+in any thread and after restarts.
 
-## Start the backend
+![A Gmail reply drafted by mem-hub, with the Memory panel showing the saved rule it applied](docs/gmail-draft.png)
 
-Requirements: Docker, [uv](https://docs.astral.sh/uv/), Python 3.12+, and an
-OpenAI API key. Run commands from this repository.
+The backend is a [pydantic-ai](https://ai.pydantic.dev/) agent behind a local
+FastAPI server. It uses an OpenAI model for drafting, local embeddings
+(`all-MiniLM-L6-v2`), and [Actian VectorAI DB](https://www.actian.com/databases/vectorai-db/)
+for long-term memory.
+
+## How memory works
+
+1. **Draft.** You click **✦ Draft reply** in Gmail. The server retrieves the
+   saved rules most similar to the email and gives them to the agent.
+2. **Correct.** You click **Refine** and describe what to change. The agent
+   revises the draft and, if the correction is reusable, saves it with its
+   `save_memory` tool as a rule tagged with an email category: general,
+   speaker invitations, sponsor inquiries, or student questions.
+3. **Reuse.** On the next email, the agent applies only the rules whose
+   category matches. Speaker invitation rules stay out of sponsorship replies.
+4. **Inspect.** Before returning a draft, the agent reports which rules it
+   applied. The **Memory** indicator in Gmail lists them, and the server drops
+   any rule the agent names that it was never given.
+
+Each Gmail thread keeps its own conversation history. Saved rules are shared
+across all threads.
+
+## Quick start
+
+Requirements: Docker, [uv](https://docs.astral.sh/uv/), Python 3.12+, Chrome,
+and an OpenAI API key. Clone the repository and run all commands from it:
+
+```bash
+git clone https://github.com/alexeygrigorev/mem-hub.git
+cd mem-hub
+```
+
+### 1. Start VectorAI DB
 
 ```bash
 docker run -d --name vectorai \
@@ -15,78 +47,103 @@ docker run -d --name vectorai \
   -p 6573-6575:6573-6575 \
   -e ACTIAN_VECTORAI_ACCEPT_EULA=YES \
   actian/vectorai:latest
-uv sync
 ```
 
 If the container already exists, run `docker start vectorai` instead.
-Create `.env` with `OPENAI_API_KEY=your-key`, then start the API:
+
+### 2. Start the backend
+
+Create `.env` with `OPENAI_API_KEY=your-key`, then run:
 
 ```bash
+uv sync
 uv run uvicorn server:app --host 127.0.0.1 --port 8000
 ```
 
-The first run downloads `all-MiniLM-L6-v2`. The root endpoint at
-[localhost:8000](http://localhost:8000) returns the service status.
-No frontend build is required.
+The first run downloads the embedding model. Open
+[localhost:8000](http://localhost:8000) to check the service status.
 
-## Install and use the extension
+### 3. Install the extension
 
-1. Open `chrome://extensions` and enable Developer mode.
-2. Click **Load unpacked** and select this repository's `extension` folder.
-3. Refresh Gmail and open a reply or compose window.
-4. Click **✦ Draft reply** above the message body and review the generated text.
-5. Click **Refine**, enter a correction, and click **✦ Draft again**.
+The extension isn't in the Chrome Web Store, so you load it from this
+repository as an unpacked extension:
 
-Memory is always enabled. The **⚙** menu resets the current conversation.
-Click the top-right **Memory** indicator to inspect the rules the agent reports
-applying. **Memory · 0** means no saved rules applied to this draft.
-You choose when to send the reply using Gmail.
+1. Open `chrome://extensions` in Chrome.
+2. Turn on **Developer mode** in the top-right corner.
+3. Click **Load unpacked** and select the `extension` folder inside the clone.
+   **mem-hub for Gmail** appears in the extension list.
+4. Refresh any open Gmail tabs. The extension only adds its controls to pages
+   loaded after it was installed.
+5. Open an email and click **Reply**. If **✦ Draft reply** appears above the
+   message body, the extension is working.
 
-After editing extension files, reload it in `chrome://extensions` and refresh
-Gmail. See [extension/README.md](extension/README.md) for details and
-[demo.md](demo.md) for the walkthrough.
+The extension talks to the backend at `http://localhost:8000`, so keep the
+server from step 2 running while you use it. If drafting fails, check that
+[localhost:8000](http://localhost:8000) responds.
+
+To update after pulling changes or editing files in `extension/`, click the
+reload icon on the extension's card in `chrome://extensions` and refresh Gmail.
+
+## Use it in Gmail
+
+1. Open an email, click **Reply**, then click **✦ Draft reply** above the
+   message body. The draft appears in Gmail's editor.
+2. Click **Refine**, type a correction, and click **✦ Draft again**.
+3. Click **Memory** in the top-right corner to see which saved rules were
+   used. **Memory · 0** means no saved rules applied to this draft.
+4. Review the reply and send it from Gmail as usual. The extension never sends
+   mail.
+
+Memory is always on. The **⚙** menu's **Reset conversation** clears the
+current thread's history but keeps saved rules.
+
+For a scripted walkthrough with three test emails, see [demo.md](demo.md).
+Extension details are in [extension/README.md](extension/README.md).
 
 ## Reset memory
 
 Stop the backend, then run:
 
 ```bash
-uv run python reset.py --dry-run
-uv run python reset.py
+uv run python reset.py --dry-run   # check the storage path, change nothing
+uv run python reset.py             # delete all collections and restart the container
 ```
 
-The first command verifies the storage path without changing it. The second
-deletes **all collections** in this repository's `local_data` database and
-restarts the container. Restart the backend and refresh Gmail afterward.
-The default container name is `vectorai`. Use `--container NAME` only if you
-deliberately chose a different name.
+This wipes **every collection** in this repository's `local_data` database.
+Restart the backend and refresh Gmail afterward. If your container isn't
+named `vectorai`, pass `--container NAME`.
 
-Gmail's **Reset conversation** clears only that thread's history;
-it does not delete saved preferences.
+## Project layout
 
-## Architecture and tests
+| Path | Purpose |
+| --- | --- |
+| `extension/` | Gmail controls and the background streaming client |
+| `server.py` | API, memory loading, per-thread conversations, streaming |
+| `agent.py` | Agent definition and memory tools |
+| `instructions.md` | The agent's drafting and memory rules; edit it to change the prompt |
+| `memory.py` | Embeddings, categorized rule storage, and retrieval |
+| `reset.py` | Validated local database reset |
+| `tests/` | Backend and extension regression tests |
 
-- `extension/`: Gmail controls and background streaming client.
-- `server.py`: API, memory loading, per-thread conversations, and streaming.
-- `agent.py`: drafting instructions and memory tools.
-- `instructions.md`: the agent's reviewable drafting and memory rules, loaded
-  for each request. Edit this file to change the prompt.
-- `memory.py`: embeddings, categorized preference storage, and retrieval.
-- `reset.py`: validated local database reset.
-- `tests/`: backend and extension regression tests.
-
-Preferences persist in `email_drafting_memories`. Conversation history clears
-when the backend restarts. This is a local, single-user application using user
-ID `alexey`, without authentication. Email text goes to the configured OpenAI
-model; incoming correspondence is not intended to teach preferences.
+## Tests
 
 ```bash
 uv run python -m unittest discover -s tests -v
-npm ci --prefix tests
-npm test --prefix tests
+npm ci --prefix tests && npm test --prefix tests   # extension tests, needs Node.js
 ```
 
-Node.js is needed only for extension tests.
+## Limitations
 
-Based on the [Agent Memory Hub](https://github.com/actian-devs/agent-memory-hub)
-persistent-memory pattern.
+- Local and single-user: one hard-coded user ID, no authentication.
+- Email text is sent to the configured OpenAI model.
+- Only your own corrections create rules. Incoming emails are treated as
+  untrusted and never teach preferences.
+- Saved rules persist in the `email_drafting_memories` collection.
+  Conversation history lives in memory and clears when the backend restarts.
+
+## More VectorAI DB examples
+
+This project follows the persistent memory pattern from
+[Agent Memory Hub](https://github.com/actian-devs/agent-memory-hub). The hub
+collects more tutorials, videos, and working code for building agent memory
+with VectorAI DB, including other frameworks and edge deployments.
