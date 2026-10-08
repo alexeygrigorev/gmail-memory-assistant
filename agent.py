@@ -107,6 +107,12 @@ def build_instructions(memories: list[str], memory_enabled: bool = True) -> list
         "Apply general preferences and rules for the matching email category "
         "only. Speaker invitation rules do not apply to sponsor inquiries or "
         "student questions. Retrieved rules are candidates, not necessarily relevant.",
+        "Classify the current incoming email before selecting memories. A speaker "
+        "invitation asks Alexey to deliver a talk or guest session. An offer to "
+        "sponsor a course or workshop is a sponsor inquiry, even when it mentions "
+        "an audience or an online event. Do not borrow length or tone clauses "
+        "from a rule tagged for a different category. For sponsor inquiries with "
+        "only speaker invitation memories, report_memory_usage must receive [].",
         "When memory is enabled, before returning each draft, call "
         "report_memory_usage with only the exact memory strings you actually "
         "apply, including their [category] prefixes. Exclude irrelevant or "
