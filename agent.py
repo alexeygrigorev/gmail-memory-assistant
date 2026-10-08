@@ -6,11 +6,12 @@ Memory operations are exposed as events to the extension.
 
 import json
 import re
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic_ai import Agent, ModelRetry
+from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
@@ -29,7 +30,16 @@ MODEL = "openai:gpt-5-mini"
 MODEL_SETTINGS = OpenAIChatModelSettings(openai_reasoning_effort="minimal")
 
 
+@dataclass
+class DraftContext:
+    """Memory provenance and reporting state for a single drafting request."""
+
+    available: set[str] = field(default_factory=set)
+    usage_reported: bool = False
+
+
 def save_memory(
+    ctx: RunContext[DraftContext],
     content: str,
     category: Literal["general", "speaker invitations", "sponsor inquiries", "student questions"],
     rule: str,
@@ -45,11 +55,13 @@ def save_memory(
     guessed preferences, or anything the user says is only for this draft.
     """
     memory.remember(content, category, rule)
+    ctx.deps.available.add(f"[{category}] {content}")
+    ctx.deps.usage_reported = False
     print(f"[memory] SAVED: {content}")
     return f"Saved to long-term memory: [{category}] {content}"
 
 
-def search_memory(query: str) -> list[str]:
+def search_memory(ctx: RunContext[DraftContext], query: str) -> list[str]:
     """
     Search long-term memory for drafting rules related to an email.
 
@@ -57,8 +69,25 @@ def search_memory(query: str) -> list[str]:
     the user, or when they ask what you remember.
     """
     found = memory.recall(query)
+    ctx.deps.available.update(found)
+    ctx.deps.usage_reported = False
     print(f'[memory] SEARCHED "{query}" -> {len(found)} results')
     return found
+
+
+def report_memory_usage(ctx: RunContext[DraftContext], items: list[str]) -> dict:
+    """Report available memories applied to the forthcoming draft.
+
+    Copy complete strings including [category]. Include only preferences that
+    influence this draft. Use [] when none apply. Call after saves or searches.
+    This reports selection, not a new memory to persist.
+    """
+    # Exclude stale or paraphrased rules without preventing draft completion.
+    items = list(dict.fromkeys(items))
+    used = [item for item in items if item in ctx.deps.available]
+    unavailable = [item for item in items if item not in ctx.deps.available]
+    ctx.deps.usage_reported = True
+    return {"used": used, **({"unavailable": unavailable} if unavailable else {})}
 
 
 def get_current_date() -> str:
@@ -136,64 +165,18 @@ def build_agent(memories: list[str], memory_enabled: bool = True) -> Agent:
     Create the chat agent with its memories and tools.
     """
 
-    available = set(memories)
-    usage_reported = False
-    persist = save_memory
-    retrieve = search_memory
-
-    def save_preference(
-        content: str,
-        category: Literal["general", "speaker invitations", "sponsor inquiries", "student questions"],
-        rule: str,
-    ) -> str:
-        nonlocal usage_reported
-        usage_reported = False
-        result = persist(content, category, rule)
-        available.add(f"[{category}] {content}")
-        return result
-
-    def search_preferences(query: str) -> list[str]:
-        nonlocal usage_reported
-        usage_reported = False
-        found = retrieve(query)
-        available.update(found)
-        return found
-
-    # Keep the original tool names and descriptions in the model's schema.
-    save_preference.__name__ = "save_memory"
-    save_preference.__doc__ = persist.__doc__
-    search_preferences.__name__ = "search_memory"
-    search_preferences.__doc__ = retrieve.__doc__
-
-    def report_memory_usage(items: list[str]) -> dict:
-        """Report the exact available memories applied to the forthcoming draft.
-
-        Copy complete strings including [category]. Include only preferences
-        that influence this draft. Use [] when none apply. Call after any saves
-        or searches. This reports selection, not a new memory to persist.
-        """
-        nonlocal usage_reported
-        # A stale or paraphrased usage report must not prevent drafting. Keep
-        # provenance strict by excluding unavailable strings from the UI.
-        used = list(dict.fromkeys(item for item in items if item in available))
-        unavailable = list(dict.fromkeys(item for item in items if item not in available))
-        usage_reported = True
-        result = {"used": used}
-        if unavailable:
-            result["unavailable"] = unavailable
-        return result
-
     drafting_agent = Agent(
         MODEL,
+        deps_type=DraftContext,
         instructions=build_instructions(memories, memory_enabled),
-        tools=[save_preference, search_preferences, report_memory_usage] if memory_enabled else [],
+        tools=[save_memory, search_memory, report_memory_usage] if memory_enabled else [],
         model_settings=MODEL_SETTINGS,
         retries=3,
     )
 
     @drafting_agent.output_validator
-    def validate_draft(output: str) -> str:
-        if memory_enabled and not usage_reported:
+    def validate_draft(ctx: RunContext[DraftContext], output: str) -> str:
+        if memory_enabled and not ctx.deps.usage_reported:
             raise ModelRetry("Call report_memory_usage before returning your draft, even if no memories apply.")
         if re.search(r"[\u2013\u2014]|\s-\s|(?m:^\s*-\s)", output):
             raise ModelRetry("Rewrite without dash punctuation or dash-led lists. Use sentences or numbered lists.")
@@ -300,6 +283,7 @@ class Session:
     def __init__(self, memory_enabled: bool = True) -> None:
         self.memory_enabled = memory_enabled
         self.memories = []
+        self.context = DraftContext()
         self.agent = build_agent(self.memories, memory_enabled)
         self.history = []
 
@@ -307,19 +291,20 @@ class Session:
         """
         Reload memories from the database and rebuild the agent.
 
-        A long-lived session (the web server keeps one per tab) would
+        A long-lived session (the server keeps one per email thread) would
         otherwise keep the snapshot from its start: facts saved since
         then, or by another chat, would be missing from its instructions.
         """
         self.memories = load_memories(question) if self.memory_enabled else []
+        self.context = DraftContext(set(self.memories))
         self.agent = build_agent(self.memories, self.memory_enabled)
 
     def run(self, question: str) -> str:
         """
-        One synchronous turn; used by the terminal chat.
+        One synchronous drafting turn.
         """
         self.refresh(question)
-        result = self.agent.run_sync(question, message_history=self.history)
+        result = self.agent.run_sync(question, message_history=self.history, deps=self.context)
         self.history = result.all_messages()
         return result.output
 
@@ -327,7 +312,7 @@ class Session:
         """
         Run one turn and yield everything that happens as plain dicts.
         """
-        async with self.agent.iter(question, message_history=self.history) as run:
+        async with self.agent.iter(question, message_history=self.history, deps=self.context) as run:
             async for node in run:
                 async for event in node_events(node, run):
                     yield event

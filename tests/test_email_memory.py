@@ -3,6 +3,7 @@
 import asyncio
 import json
 import unittest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import agent
@@ -64,10 +65,9 @@ class MemoryTests(unittest.TestCase):
 
     def test_usage_report_excludes_memories_not_available_to_the_agent(self):
         stored = '[speaker invitations] Ask about the audience.'
-        tools = agent.build_agent([stored])._function_toolset.tools
-        report = tools['report_memory_usage'].function
-        self.assertEqual(report([stored, stored]), {'used': [stored]})
-        self.assertEqual(report([stored, '[general] An invented preference']), {
+        ctx = SimpleNamespace(deps=agent.DraftContext({stored}))
+        self.assertEqual(agent.report_memory_usage(ctx, [stored, stored]), {'used': [stored]})
+        self.assertEqual(agent.report_memory_usage(ctx, [stored, '[general] An invented preference']), {
             'used': [stored], 'unavailable': ['[general] An invented preference'],
         })
 
@@ -85,16 +85,36 @@ class MemoryTests(unittest.TestCase):
 
         drafting_agent = agent.build_agent([])
         with drafting_agent.override(model=FunctionModel(respond)):
-            result = drafting_agent.run_sync('Draft a reply')
+            result = drafting_agent.run_sync('Draft a reply', deps=agent.DraftContext())
         self.assertEqual(calls, 2)
         self.assertEqual(result.output, 'Hi Daniel, thanks for the invitation.')
 
     def test_usage_report_can_include_additional_search_results(self):
         found = '[general] Keep replies concise.'
-        tools = agent.build_agent([])._function_toolset.tools
+        ctx = SimpleNamespace(deps=agent.DraftContext())
         with patch.object(memory, 'recall', return_value=[found]):
-            tools['search_memory'].function('reply length')
-        self.assertEqual(tools['report_memory_usage'].function([found]), {'used': [found]})
+            agent.search_memory(ctx, 'reply length')
+        self.assertEqual(agent.report_memory_usage(ctx, [found]), {'used': [found]})
+
+    def test_save_updates_request_context_and_requires_a_new_usage_report(self):
+        ctx = SimpleNamespace(deps=agent.DraftContext(usage_reported=True))
+        with patch.object(memory, 'remember') as remember:
+            result = agent.save_memory(ctx, 'Keep replies short.', 'general', 'length')
+        remember.assert_called_once_with('Keep replies short.', 'general', 'length')
+        self.assertIn('[general] Keep replies short.', result)
+        self.assertEqual(ctx.deps.available, {'[general] Keep replies short.'})
+        self.assertFalse(ctx.deps.usage_reported)
+
+    def test_request_context_is_replaced_when_memories_are_refreshed(self):
+        session = agent.Session()
+        previous = session.context
+        previous.available.add('[general] Old rule')
+        previous.usage_reported = True
+        with patch.object(memory, 'recall', return_value=['[general] New rule']):
+            session.refresh('Draft a reply')
+        self.assertIsNot(session.context, previous)
+        self.assertEqual(session.context.available, {'[general] New rule'})
+        self.assertFalse(session.context.usage_reported)
 
     def test_dash_punctuation_triggers_a_rewrite(self):
         calls = 0
@@ -107,7 +127,7 @@ class MemoryTests(unittest.TestCase):
 
         drafting_agent = agent.build_agent([], memory_enabled=False)
         with drafting_agent.override(model=FunctionModel(respond)):
-            result = drafting_agent.run_sync('Draft a reply')
+            result = drafting_agent.run_sync('Draft a reply', deps=agent.DraftContext())
         self.assertEqual(calls, 2)
         self.assertEqual(result.output, 'Hi Maya, thank you. What is the date?')
 
@@ -123,7 +143,7 @@ class MemoryTests(unittest.TestCase):
 
         drafting_agent = agent.build_agent([])
         with drafting_agent.override(model=FunctionModel(respond)):
-            result = drafting_agent.run_sync('Draft a reply')
+            result = drafting_agent.run_sync('Draft a reply', deps=agent.DraftContext())
         self.assertEqual(calls, 3)
         self.assertEqual(result.output, 'Hi Maya, thank you.')
 
