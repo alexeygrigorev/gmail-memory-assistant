@@ -21,7 +21,8 @@ function subjectText() {
   const input = document.querySelector('input[name="subjectbox"]');
   if (input && input.value.trim()) return input.value.trim();
   const heading = [...document.querySelectorAll("h2.hP")].find((h) => h.offsetParent !== null);
-  return heading ? heading.textContent.trim() : "(no subject)";
+  if (heading) return heading.textContent.trim();
+  return "(no subject)";
 }
 
 function threadText() {
@@ -31,22 +32,26 @@ function threadText() {
     .map((el) => el.innerText.trim())
     .filter(Boolean);
   const text = parts.join("\n---\n");
-  return text.length > 6000 ? text.slice(-6000) : text;
+  if (text.length > 6000) return text.slice(-6000);
+  return text;
 }
 
 function buildPrompt(instruction, previousDraft = "") {
-  return [
-    previousDraft
-      ? `Revise the previous draft using my correction. Save reusable drafting preferences from my correction. My correction: ${instruction}`
-      : `Draft a reply to this email thread. ${instruction}`,
+  let request = `Draft a reply to this email thread. ${instruction}`;
+  if (previousDraft) {
+    request = `Revise the previous draft using my correction. Save reusable drafting preferences from my correction. My correction: ${instruction}`;
+  }
+  const parts = [
+    request,
     "Answer with the email body text only - no subject line, no signature block.",
     "",
     `Subject: ${subjectText()}`,
     "",
     "Thread:",
     threadText() || "(empty)",
-    ...(previousDraft ? ["", "Previous draft:", previousDraft] : []),
-  ].join("\n");
+  ];
+  if (previousDraft) parts.push("", "Previous draft:", previousDraft);
+  return parts.join("\n");
 }
 
 function attachPanel(editable) {
@@ -206,12 +211,18 @@ function wire(panel, editable) {
       case "tool_result":
         if (event.name === 'report_memory_usage') {
           try {
-            const report = typeof event.result === 'string' ? JSON.parse(event.result) : event.result;
+            let report = event.result;
+            if (typeof report === 'string') report = JSON.parse(report);
             if (Array.isArray(report.used)) {
               const items = [...new Set(report.used.filter(item => typeof item === 'string'))];
               usageReported = true;
-              showMemory(items.length ? 'used' : 'empty', `Memory · ${items.length}`,
-                items.length ? 'The assistant reports applying these saved preferences.' : 'No saved preferences were used for this draft.', items);
+              let state = 'empty';
+              let note = 'No saved preferences were used for this draft.';
+              if (items.length) {
+                state = 'used';
+                note = 'The assistant reports applying these saved preferences.';
+              }
+              showMemory(state, `Memory · ${items.length}`, note, items);
             }
           } catch { /* A failed tool result is shown by subsequent stream events. */ }
         }
@@ -247,7 +258,8 @@ function wire(panel, editable) {
   btn.addEventListener("click", () => {
     const instruction =
       panel.querySelector(".memhub-instr").value.trim() || "Write a polite, concise reply.";
-    const previousDraft = instructionBox.value.trim() ? editable.innerText.trim() : "";
+    let previousDraft = "";
+    if (instructionBox.value.trim()) previousDraft = editable.innerText.trim();
     originalBody = editable.innerText;
     draft = "";
     out.textContent = "";

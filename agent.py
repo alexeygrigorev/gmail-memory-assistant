@@ -71,7 +71,10 @@ def report_memory_usage(ctx: RunContext[DraftContext], items: list[str]) -> dict
     items = list(dict.fromkeys(items))
     used = [item for item in items if item in ctx.deps.available]
     unavailable = [item for item in items if item not in ctx.deps.available]
-    return {"used": used, **({"unavailable": unavailable} if unavailable else {})}
+    result = {"used": used}
+    if unavailable:
+        result["unavailable"] = unavailable
+    return result
 
 
 def get_current_date() -> str:
