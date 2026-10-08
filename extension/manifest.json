@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "mem-hub for Gmail",
+  "version": "0.1.0",
+  "description": "Draft Gmail replies with the mem-hub memory agent running on localhost.",
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"],
+      "css": ["panel.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
