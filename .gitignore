@@ -1,6 +1,7 @@
 .venv/
 local_data/
 .env
+.memory-reset
 __pycache__/
 web/node_modules/
 tests/node_modules/

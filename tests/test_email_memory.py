@@ -4,6 +4,8 @@ import asyncio
 import json
 import unittest
 from types import SimpleNamespace
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
 import agent
@@ -64,6 +66,22 @@ class MemoryTests(unittest.TestCase):
         server.reset_session('comparison')
         server.reset_session('other-thread')
         self.assertFalse(server.sessions)
+
+    def test_database_reset_discards_all_existing_conversation_histories(self):
+        with TemporaryDirectory() as directory:
+            marker = Path(directory) / '.memory-reset'
+            with patch.object(server, 'RESET_MARKER', marker), patch.object(server, 'reset_generation', None):
+                first = server.get_session('first-thread')
+                second = server.get_session('second-thread')
+                first.history.append('Old correction about recording and live coding')
+                second.history.append('Old retrieved memories')
+                marker.write_text('new-reset', encoding='utf-8')
+                fresh = server.get_session('first-thread')
+                self.assertIsNot(fresh, first)
+                self.assertEqual(fresh.history, [])
+                self.assertNotIn('second-thread', server.sessions)
+                self.assertIs(server.get_session('first-thread'), fresh)
+        server.sessions.clear()
 
     def test_usage_report_excludes_memories_not_available_to_the_agent(self):
         stored = '[speaker invitations] Ask about the audience.'

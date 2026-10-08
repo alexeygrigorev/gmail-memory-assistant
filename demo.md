@@ -5,8 +5,8 @@ Use test messages sent between accounts you control: one speaker invitation,
 another online guest-session invitation, and a sponsorship inquiry. The demo
 happens in real Gmail. Generated replies can stay as drafts.
 
-Saved preferences survive refreshes and server restarts. For a clean run, stop
-the backend and follow the reset instructions in README.md. Memory is always
+Saved preferences survive refreshes and server restarts. For a clean run,
+follow the reset instructions in README.md. Memory is always
 enabled, so inspect the Memory indicator when using existing preferences.
 
 ## 1. Draft the first invitation reply

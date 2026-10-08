@@ -102,7 +102,7 @@ Extension details are in [extension/README.md](extension/README.md).
 
 ## Reset memory
 
-Stop the backend, then run:
+Wait for any draft generation to finish, then run:
 
 ```bash
 uv run python reset.py --dry-run   # check the storage path, change nothing
@@ -110,7 +110,9 @@ uv run python reset.py             # delete all collections and restart the cont
 ```
 
 This wipes every collection in this repository's `local_data` database.
-Restart the backend and refresh Gmail afterward. If your container isn't
+The reset also marks all backend conversation histories for clearing on the
+next request, so restarting the backend is not required. Refresh Gmail and
+start with an empty Refine field for a clean draft. If your container isn't
 named `vectorai`, pass `--container NAME`.
 
 ## Project layout

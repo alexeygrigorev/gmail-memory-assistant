@@ -9,6 +9,7 @@ The extension posts drafting requests and receives Server-Sent-Events.
 
 import asyncio
 import json
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -169,6 +170,8 @@ class Session:
 # database; this is deliberately not it.
 sessions: dict[str, Session] = {}
 locks: dict[str, asyncio.Lock] = {}
+RESET_MARKER = Path(__file__).resolve().parent / ".memory-reset"
+reset_generation: str | None = None
 
 
 class ChatRequest(BaseModel):
@@ -178,6 +181,13 @@ class ChatRequest(BaseModel):
 
 def get_session(name: str) -> Session:
     """Return or create the conversation for this email thread."""
+    global reset_generation
+    generation = ""
+    if RESET_MARKER.exists():
+        generation = RESET_MARKER.read_text(encoding="utf-8")
+    if generation != reset_generation:
+        sessions.clear()
+        reset_generation = generation
     if name not in sessions:
         sessions[name] = Session()
     return sessions[name]

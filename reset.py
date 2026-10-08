@@ -10,8 +10,10 @@ import json
 import subprocess
 import time
 from pathlib import Path
+from uuid import uuid4
 
 DATA_DIR = Path(__file__).resolve().parent / "local_data"
+RESET_MARKER = Path(__file__).resolve().parent / ".memory-reset"
 
 parser = argparse.ArgumentParser(description="Delete all collections in this repo's local VectorAI database.")
 parser.add_argument("--container", default="vectorai", help="Docker container name (default: vectorai)")
@@ -42,7 +44,9 @@ subprocess.run(
     ],
     check=True,
 )
+# Notify running backends to drop histories that still contain old preferences.
+RESET_MARKER.write_text(str(uuid4()), encoding="utf-8")
 subprocess.run(["docker", "start", args.container], capture_output=True, check=True)
 time.sleep(8.0)
 
-print("All memories deleted.")
+print("All memories deleted. Backend conversation histories will reset on the next request.")
