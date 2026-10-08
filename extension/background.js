@@ -45,7 +45,6 @@ async function streamChat(port, msg) {
       body: JSON.stringify({
         session: msg.session,
         message: msg.message,
-        memory_enabled: msg.memory_enabled,
       }),
     });
     const response = request.response;

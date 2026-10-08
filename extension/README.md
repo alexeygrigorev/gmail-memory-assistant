@@ -18,11 +18,10 @@ backend changes are needed.
 - **✦ Draft reply** generates a reply directly in Gmail's message body.
 - **Refine** opens an optional instruction box. Enter a correction and click
   **✦ Draft again** to revise the current reply.
-- **⚙** contains **Use saved preferences** and **Reset conversation**.
+- Memory is always enabled. **⚙** contains **Reset conversation**.
   Reset clears this thread's server-side history; long-term memories stay.
 - Click the **Memory** indicator in the top-right corner to inspect the rules
-  the assistant reports applying. **Memory · 0** means no preferences were used;
-  **Memory off** means they were disabled for that draft.
+  the assistant reports applying. **Memory · 0** means no preferences were used.
 - If you edit the message while generation is running, your edits are kept.
   Review the proposed reply and click **Use this draft** to replace them.
 
@@ -38,14 +37,13 @@ memories accumulate per conversation.
 ## Demo in Gmail
 
 Follow the walkthrough in [demo.md](../demo.md) using messages between two accounts you control.
-Open the received invitation in Gmail and click Reply. Use memory off for
-an honest baseline when the database already contains preferences. Enable
-memory, enter the correction from demo.md, and generate again. Expand
-Preferences used to inspect the actual reported rule.
+Open the received invitation in Gmail and click Reply. For a clean baseline,
+reset the database following the main README. Enter the correction from
+demo.md and generate again. Click the Memory indicator to inspect the rule.
 
 Open the other invitation and generate without repeating the correction.
 Each conversation uses its Gmail thread ID, including modern alphanumeric
-IDs. Compare with memory off and check the sponsorship email for relevance.
+IDs. Check the sponsorship email for relevance.
 Drafts appear in Gmail's reply editor; sending the reply is optional.
 
 After editing extension files, reload mem-hub on chrome://extensions and

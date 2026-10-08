@@ -108,7 +108,7 @@ test('Gmail placeholder never shows Refine, including after typing and clearing'
   assert.equal(refine.hidden, true);
 });
 
-test('corner memory indicator shows reported rules, zero use, and memory off', () => {
+test('corner memory indicator shows reported rules, zero use, and failures', () => {
   let receive;
   const f = fixture(editor, { runtime: { connect: () => ({
     onMessage: { addListener: fn => { receive = fn; } },
@@ -116,8 +116,7 @@ test('corner memory indicator shows reported rules, zero use, and memory off', (
   }) } });
   const document = f.document;
   const indicator = document.querySelector('.memhub-used');
-  const checkbox = document.querySelector('.memhub-mem');
-  checkbox.checked = true;
+  assert.equal(document.querySelector('.memhub-mem'), null);
   document.querySelector('.memhub-go').click();
   assert.equal(indicator.dataset.state, 'pending');
   receive({ type: 'tool_result', name: 'report_memory_usage', result: JSON.stringify({
@@ -130,9 +129,8 @@ test('corner memory indicator shows reported rules, zero use, and memory off', (
   assert.equal(indicator.querySelector('summary').textContent, 'Memory · 0');
   assert.match(indicator.querySelector('p').textContent, /No saved preferences were used/);
   assert.equal(indicator.querySelectorAll('li').length, 0);
-  checkbox.checked = false;
   document.querySelector('.memhub-go').click();
-  assert.equal(indicator.querySelector('summary').textContent, 'Memory off');
+  assert.equal(indicator.dataset.state, 'pending');
   receive({ type: 'error', message: 'Request failed' });
   assert.equal(indicator.dataset.state, 'error');
   assert.match(indicator.querySelector('p').textContent, /could not be confirmed/);

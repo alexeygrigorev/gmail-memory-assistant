@@ -81,7 +81,6 @@ function attachPanel(editable) {
       <details class="memhub-settings"><summary aria-label="Drafting settings" title="mem-hub settings">⚙</summary>
         <div class="memhub-popover">
           <span class="memhub-title">mem-hub</span>
-          <label class="memhub-mem-wrap"><input type="checkbox" class="memhub-mem" checked> Use saved preferences</label>
           <button type="button" class="memhub-reset">Reset conversation</button>
         </div>
       </details>
@@ -102,13 +101,11 @@ function wire(panel, editable) {
   const log = panel.querySelector(".memhub-log");
   const btn = panel.querySelector(".memhub-go");
   const insertBtn = panel.querySelector(".memhub-insert");
-  const memBox = panel.querySelector(".memhub-mem");
   let draft = "";
   let originalBody = "";
   const used = panel.querySelector('.memhub-used');
   const settings = panel.querySelector('.memhub-settings');
   let usageReported = false;
-  let generationStarted = false;
   function showMemory(state, label, note, items = []) {
     used.dataset.state = state;
     used.querySelector('summary').textContent = label;
@@ -120,10 +117,6 @@ function wire(panel, editable) {
   for (const [details, other] of [[used, settings], [settings, used]]) {
     details.addEventListener('toggle', () => { if (details.open) other.open = false; });
   }
-  memBox.addEventListener('change', () => {
-    if (!generationStarted) showMemory(memBox.checked ? 'idle' : 'off', memBox.checked ? 'Memory on' : 'Memory off',
-      memBox.checked ? 'Generate a reply to see which saved preferences the assistant applies.' : 'Saved preferences are disabled for the next draft.');
-  });
   const instructionBox = panel.querySelector('.memhub-instr');
   const refinement = panel.querySelector('.memhub-refinement');
   const refine = panel.querySelector('.memhub-refine');
@@ -263,15 +256,12 @@ function wire(panel, editable) {
     btn.disabled = true;
     log.textContent = "Drafting…";
     usageReported = false;
-    generationStarted = true;
     used.open = false;
-    showMemory(memBox.checked ? 'pending' : 'off', memBox.checked ? 'Memory …' : 'Memory off',
-      memBox.checked ? 'Checking which saved preferences are applied to this draft.' : 'Saved preferences were disabled for this draft.');
+    showMemory('pending', 'Memory …', 'Checking which saved preferences are applied to this draft.');
     sendMessage({
       type: "chat",
       session: threadId(editable),
       message: buildPrompt(instruction, previousDraft),
-      memory_enabled: memBox.checked,
     });
   });
 

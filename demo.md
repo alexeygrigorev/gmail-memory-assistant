@@ -6,8 +6,8 @@ another online guest-session invitation, and a sponsorship inquiry. The demo
 happens in real Gmail. Generated replies can stay as drafts.
 
 Saved preferences survive refreshes and server restarts. For a clean run, stop
-the backend and follow the reset instructions in README.md. Otherwise compare
-with memory disabled using **⚙ → Use saved preferences**.
+the backend and follow the reset instructions in README.md. Memory is always
+enabled, so inspect the Memory indicator when using existing preferences.
 
 ## 1. Draft the first invitation reply
 
@@ -40,16 +40,7 @@ Review whether the reply asks about the audience, length, date, and recording
 policy, and avoids offering live coding. Expand the preference count to inspect
 the reported use. Exact wording varies between runs.
 
-## 4. Compare with memory off
-
-Clear the Refine instruction box if it contains a previous correction. Open
-**⚙**, turn off **Use saved preferences**, then click **✦ Draft again**.
-This mode has separate conversation history and does not read or save memory.
-Compare the generated text. The model may independently ask similar questions;
-the reported use of a saved rule provides additional evidence of continuity.
-Turn saved preferences back on afterward.
-
-## 5. Check relevance
+## 4. Check relevance
 
 Open **A possible partnership with DataTalks.Club** from Priya and draft a reply.
 Speaker-specific preferences should not apply to this sponsorship inquiry.

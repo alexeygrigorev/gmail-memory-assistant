@@ -14,7 +14,6 @@
 .memhub-settings>summary:hover{background:#f1f3f4}
 .memhub-popover{position:absolute;right:0;top:34px;width:220px;padding:14px;background:white;border:1px solid #dadce0;border-radius:10px;box-shadow:0 4px 16px #0002;z-index:5;display:grid;gap:12px}
 .memhub-title{font-size:12px;color:#80868b}
-.memhub-mem-wrap{display:flex;align-items:center;gap:7px;color:#3c4043}
 .memhub-panel .memhub-reset{text-align:left;padding:3px 0;font-size:12px}
 .memhub-refinement{margin:10px 0 4px}
 .memhub-instr{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #dadce0;border-radius:8px;padding:8px 10px;font:13px/1.5 Arial,sans-serif;color:#3c4043;background:#fff;outline:none}

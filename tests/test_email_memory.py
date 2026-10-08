@@ -25,12 +25,13 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(server.index(), {'status': 'ok', 'service': 'mem-hub'})
         self.assertNotIn('/assets', [route.path for route in server.app.routes])
 
-    def test_disabled_session_does_not_read_or_write_memory(self):
-        with patch.object(memory, 'recall', side_effect=AssertionError('read')):
-            session = server.Session(memory_enabled=False)
+    def test_sessions_always_load_memory_and_register_memory_tools(self):
+        with patch.object(memory, 'recall', return_value=[]) as recall:
+            session = server.Session()
             session.refresh('Draft a speaker invitation reply')
-        self.assertEqual(session.memories, [])
-        self.assertEqual(session.agent._function_toolset.tools, {})
+        recall.assert_called_once()
+        self.assertEqual(set(session.agent._function_toolset.tools),
+                         {'save_memory', 'search_memory', 'report_memory_usage'})
 
     def test_changed_rule_replaces_same_user_category_key(self):
         client = MagicMock()
@@ -53,14 +54,15 @@ class MemoryTests(unittest.TestCase):
             session.refresh('Reply to the CloudNest sponsor inquiry')
         recall.assert_called_once_with('Reply to the CloudNest sponsor inquiry', limit=8)
 
-    def test_memory_modes_have_separate_conversation_histories(self):
+    def test_email_threads_have_separate_conversation_histories(self):
         server.sessions.clear()
-        enabled = server.get_session('comparison', True)
-        disabled = server.get_session('comparison', False)
-        enabled.history.append('previous turn')
-        self.assertEqual(disabled.history, [])
-        self.assertIsNot(enabled, disabled)
+        first = server.get_session('comparison')
+        second = server.get_session('other-thread')
+        first.history.append('previous turn')
+        self.assertEqual(second.history, [])
+        self.assertIsNot(first, second)
         server.reset_session('comparison')
+        server.reset_session('other-thread')
         self.assertFalse(server.sessions)
 
     def test_usage_report_excludes_memories_not_available_to_the_agent(self):

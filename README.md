@@ -37,9 +37,9 @@ No frontend build is required.
 4. Click **✦ Draft reply** above the message body and review the generated text.
 5. Click **Refine**, enter a correction, and click **✦ Draft again**.
 
-The **⚙** menu controls saved preferences and resets the current conversation.
+Memory is always enabled. The **⚙** menu resets the current conversation.
 Click the top-right **Memory** indicator to inspect the rules the agent reports
-applying. It also shows when no rules were used or memory was disabled.
+applying. **Memory · 0** means no saved rules applied to this draft.
 You choose when to send the reply using Gmail.
 
 After editing extension files, reload it in `chrome://extensions` and refresh

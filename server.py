@@ -127,11 +127,10 @@ class Session:
     One conversation: the agent, its history, and its starting memories.
     """
 
-    def __init__(self, memory_enabled: bool = True) -> None:
-        self.memory_enabled = memory_enabled
+    def __init__(self) -> None:
         self.memories = []
         self.context = DraftContext()
-        self.agent = build_agent(self.memories, memory_enabled)
+        self.agent = build_agent(self.memories)
         self.history = []
 
     def refresh(self, question: str) -> None:
@@ -142,9 +141,9 @@ class Session:
         otherwise keep the snapshot from its start: facts saved since
         then, or by another chat, would be missing from its instructions.
         """
-        self.memories = load_memories(question) if self.memory_enabled else []
+        self.memories = load_memories(question)
         self.context = DraftContext(set(self.memories))
-        self.agent = build_agent(self.memories, self.memory_enabled)
+        self.agent = build_agent(self.memories)
 
     def run(self, question: str) -> str:
         """
@@ -168,22 +167,20 @@ class Session:
 # One chat session per name: the message history that keeps working
 # memory alive while the tab stays open. Long-term memory is the
 # database; this is deliberately not it.
-sessions: dict[tuple[str, bool], Session] = {}
-locks: dict[tuple[str, bool], asyncio.Lock] = {}
+sessions: dict[str, Session] = {}
+locks: dict[str, asyncio.Lock] = {}
 
 
 class ChatRequest(BaseModel):
     session: str = "web"
     message: str
-    memory_enabled: bool = True
 
 
-def get_session(name: str, memory_enabled: bool = True) -> Session:
-    """Return the named session, loading its memories once."""
-    key = (name, memory_enabled)
-    if key not in sessions:
-        sessions[key] = Session(memory_enabled)
-    return sessions[key]
+def get_session(name: str) -> Session:
+    """Return or create the conversation for this email thread."""
+    if name not in sessions:
+        sessions[name] = Session()
+    return sessions[name]
 
 
 def sse(event: dict) -> str:
@@ -191,15 +188,15 @@ def sse(event: dict) -> str:
     return f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
 
 
-async def event_stream(name: str, question: str, memory_enabled: bool = True):
+async def event_stream(name: str, question: str):
     """Run the agent and yield SSE events as they happen."""
     yield sse({"type": "start"})
     try:
-        async with locks.setdefault((name, memory_enabled), asyncio.Lock()):
-            session = get_session(name, memory_enabled)
+        async with locks.setdefault(name, asyncio.Lock()):
+            session = get_session(name)
             await asyncio.to_thread(session.refresh, question)
             yield sse({"type": "memories", "items": session.memories,
-                       "enabled": memory_enabled})
+                       "enabled": True})
             async for event in session.events(question):
                 yield sse(event)
         yield sse({"type": "done"})
@@ -223,7 +220,7 @@ def chat(request: ChatRequest) -> StreamingResponse:
     if not question:
         return StreamingResponse(iter([sse({"type": "error", "message": "empty"})]))
     return StreamingResponse(
-        event_stream(request.session, question, request.memory_enabled),
+        event_stream(request.session, question),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -232,8 +229,7 @@ def chat(request: ChatRequest) -> StreamingResponse:
 @app.delete("/api/session/{name}")
 def reset_session(name: str) -> dict:
     """Forget the conversation history; the database memories stay."""
-    sessions.pop((name, True), None)
-    sessions.pop((name, False), None)
+    sessions.pop(name, None)
     return {"ok": True}
 
 
