@@ -3,4 +3,7 @@ local_data/
 .env
 __pycache__/
 web/node_modules/
+tests/node_modules/
 web/dist/
+server.stdout.log
+server.stderr.log

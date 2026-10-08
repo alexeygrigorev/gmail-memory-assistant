@@ -1,31 +1,26 @@
-.memhub-panel {
-  margin: 8px 0 0;
-  padding: 10px 12px;
-  border: 1px solid #dadce0;
-  border-radius: 12px;
-  background: #fff;
-  font: 13px/1.4 "Google Sans", Roboto, Arial, sans-serif;
-  color: #202124;
-}
-.memhub-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.memhub-title { font-weight: 600; color: #1a73e8; }
-.memhub-mem-wrap { display: flex; align-items: center; gap: 4px; cursor: pointer; }
-.memhub-panel button {
-  border: none; border-radius: 16px; padding: 5px 14px; cursor: pointer;
-  background: #1a73e8; color: #fff; font: inherit;
-}
-.memhub-panel button:disabled { background: #c4c7c5; cursor: default; }
-.memhub-reset { background: #f1f3f4 !important; color: #202124 !important; }
-.memhub-insert { background: #188038 !important; margin-top: 8px; }
-.memhub-instr {
-  width: 100%; box-sizing: border-box; resize: vertical;
-  border: 1px solid #dadce0; border-radius: 8px; padding: 6px 8px;
-  font: inherit; margin-bottom: 8px;
-}
-.memhub-log { color: #5f6368; font-size: 12px; margin: 6px 0 0; }
-.memhub-out {
-  white-space: pre-wrap; background: #f8f9fa; border-radius: 8px;
-  padding: 8px; margin: 8px 0 0; max-height: 220px; overflow: auto;
-  font: 13px/1.5 Roboto, Arial, sans-serif;
-}
-.memhub-out:empty { display: none; }
+.memhub-editor{position:relative!important}
+.memhub-panel{margin:0 0 12px;color:#5f6368;font:13px/1.5 Arial,sans-serif;position:relative}
+.memhub-panel [hidden]{display:none!important}
+.memhub-bar{display:flex;align-items:center;gap:12px;min-height:32px;flex-wrap:wrap}
+.memhub-panel button{font:inherit;cursor:pointer;background:transparent;border:0;color:#5f6368;padding:5px 8px;border-radius:16px}
+.memhub-panel button:hover{background:#f1f3f4}
+.memhub-panel .memhub-go{border:1px solid #dadce0;padding:5px 13px;color:#1a73e8;font-weight:500;background:#fff}
+.memhub-panel .memhub-go:hover{background:#f6fafe;border-color:#d2e3fc}
+.memhub-panel button:disabled{color:#9aa0a6;cursor:default;background:transparent}
+.memhub-log{font-size:12px;color:#80868b}
+.memhub-settings{position:relative;margin-left:auto}
+.memhub-settings>summary{list-style:none;cursor:pointer;padding:4px 8px;font-size:17px;color:#80868b;border-radius:50%}
+.memhub-settings>summary::-webkit-details-marker{display:none}
+.memhub-settings>summary:hover{background:#f1f3f4}
+.memhub-popover{position:absolute;right:0;top:34px;width:220px;padding:14px;background:white;border:1px solid #dadce0;border-radius:10px;box-shadow:0 4px 16px #0002;z-index:5;display:grid;gap:12px}
+.memhub-title{font-size:12px;color:#80868b}
+.memhub-mem-wrap{display:flex;align-items:center;gap:7px;color:#3c4043}
+.memhub-panel .memhub-reset{text-align:left;padding:3px 0;font-size:12px}
+.memhub-refinement{margin:10px 0 4px}
+.memhub-instr{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #dadce0;border-radius:8px;padding:8px 10px;font:13px/1.5 Arial,sans-serif;color:#3c4043;background:#fff;outline:none}
+.memhub-instr:focus{border-color:#1a73e8}
+.memhub-used{margin-top:6px;font-size:11px;color:#80868b}
+.memhub-used>summary{cursor:pointer}
+.memhub-used ul{padding-left:18px;margin:6px 0;line-height:1.5;max-height:140px;overflow:auto}
+.memhub-out{white-space:pre-wrap;background:#f8f9fa;border-radius:8px;padding:12px;max-height:220px;overflow:auto;font:13px/1.5 Arial,sans-serif;color:#202124}
+.memhub-panel .memhub-insert{color:#1a73e8}

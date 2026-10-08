@@ -7,15 +7,39 @@ const SERVER = "http://localhost:8000";
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "mem-hub") return;
+  let disconnected = false;
+  const requests = new Set();
+  port.onDisconnect.addListener(() => {
+    // Reading lastError acknowledges Chrome's expected disconnect notification.
+    void chrome.runtime.lastError;
+    disconnected = true;
+    for (const controller of requests) controller.abort();
+  });
+  const channel = {
+    send(event) {
+      if (disconnected) return;
+      try { port.postMessage(event); }
+      catch { disconnected = true; for (const controller of requests) controller.abort(); }
+    },
+    async fetch(url, options) {
+      const controller = new AbortController();
+      requests.add(controller);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        return { response, release: () => requests.delete(controller) };
+      } catch (error) { requests.delete(controller); throw error; }
+    },
+  };
   port.onMessage.addListener((msg) => {
-    if (msg.type === "chat") streamChat(port, msg);
-    else if (msg.type === "reset") resetSession(port, msg);
+    if (msg.type === "chat") streamChat(channel, msg);
+    else if (msg.type === "reset") resetSession(channel, msg);
   });
 });
 
 async function streamChat(port, msg) {
+  let release = () => {};
   try {
-    const response = await fetch(`${SERVER}/api/chat`, {
+    const request = await port.fetch(`${SERVER}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -24,8 +48,10 @@ async function streamChat(port, msg) {
         memory_enabled: msg.memory_enabled,
       }),
     });
+    const response = request.response;
+    release = request.release;
     if (!response.ok || !response.body) {
-      port.postMessage({ type: "error", message: `Server returned ${response.status}` });
+      port.send({ type: "error", message: `Server returned ${response.status}` });
       return;
     }
     // MV3 service workers have no EventSource: read the body and split
@@ -44,27 +70,30 @@ async function streamChat(port, msg) {
         const line = frame.split("\n").find((l) => l.startsWith("data: "));
         if (!line) continue;
         try {
-          port.postMessage(JSON.parse(line.slice(6)));
+          port.send(JSON.parse(line.slice(6)));
         } catch {
           // not JSON - skip the frame
         }
       }
     }
   } catch (error) {
-    port.postMessage({
+    if (error.name !== 'AbortError') port.send({
       type: "error",
       message: `Cannot reach ${SERVER} - is uvicorn running? (${error.message})`,
     });
   } finally {
-    port.postMessage({ type: "stream-end" });
+    release();
+    port.send({ type: "stream-end" });
   }
 }
 
 async function resetSession(port, msg) {
   try {
-    await fetch(`${SERVER}/api/session/${encodeURIComponent(msg.session)}`, { method: "DELETE" });
-    port.postMessage({ type: "reset-ok" });
+    const { response, release } = await port.fetch(`${SERVER}/api/session/${encodeURIComponent(msg.session)}`, { method: "DELETE" });
+    release();
+    if (!response.ok) throw new Error(`Server returned ${response.status}`);
+    port.send({ type: "reset-ok" });
   } catch (error) {
-    port.postMessage({ type: "error", message: error.message });
+    if (error.name !== 'AbortError') port.send({ type: "error", message: error.message });
   }
 }
