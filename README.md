@@ -69,6 +69,8 @@ it does not delete saved preferences.
 - `extension/`: Gmail controls and background streaming client.
 - `server.py`: API, memory loading, per-thread conversations, and streaming.
 - `agent.py`: drafting instructions and memory tools.
+- `instructions.md`: the agent's reviewable drafting and memory rules, loaded
+  for each request. Edit this file to change the prompt.
 - `memory.py`: embeddings, categorized preference storage, and retrieval.
 - `reset.py`: validated local database reset.
 - `tests/`: backend and extension regression tests.
